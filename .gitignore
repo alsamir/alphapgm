@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Turbo
+.turbo/
+
+# Prisma
+prisma/migrations/**/migration_lock.toml
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Test
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Old codebase (preserved for reference)
+catalyser_nextjs/
+catalyser_project/
+db_dump/

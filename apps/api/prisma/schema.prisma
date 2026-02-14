@@ -1,0 +1,224 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// EXISTING TABLES (mapped from production DB)
+// ============================================================
+
+model AllData {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(1000)
+  nameModified String    @map("name_modified") @db.VarChar(1000)
+  urlPath      String    @map("url_path") @db.VarChar(1000)
+  brand        String    @db.VarChar(1000)
+  weight       String    @db.VarChar(1000)
+  pt           String    @db.VarChar(1000)
+  pd           String    @db.VarChar(1000)
+  rh           String    @db.VarChar(1000)
+  keywords     String    @db.VarChar(1000)
+  imageUrl     String    @map("image_url") @db.VarChar(1000)
+  prices       String    @db.VarChar(1000)
+  brandImage   String?   @map("brand_image") @db.VarChar(255)
+  createdDate  DateTime? @map("created_date") @db.DateTime(6)
+
+  @@map("all_data")
+  @@index([brand])
+  @@index([name(length: 255)])
+  @@fulltext([name, keywords])
+}
+
+model LkCurrency {
+  currencyId    Int     @id @default(autoincrement()) @map("currency_id")
+  currencyCodes String? @map("currency_codes") @db.VarChar(255)
+  descAr        String? @map("desc_ar") @db.VarChar(255)
+  descEn        String? @map("desc_en") @db.VarChar(255)
+  symbol        String? @db.VarChar(255)
+
+  priceMetals  PriceMetals[]
+  settingUsers SettingUser[]
+
+  @@map("lk_currency")
+}
+
+model LkStatus {
+  statusId Int     @id @default(autoincrement()) @map("status_id")
+  desc1    String? @map("desc_1") @db.VarChar(255)
+  desc2    String? @map("desc_2") @db.VarChar(255)
+  descAr   String? @map("desc_ar") @db.VarChar(255)
+  descEn   String? @map("desc_en") @db.VarChar(255)
+  descFr   String? @map("desc_fr") @db.VarChar(255)
+
+  users User[]
+
+  @@map("lk_status")
+}
+
+model PriceMetals {
+  id         Int       @id @default(autoincrement())
+  name       String?   @db.VarChar(255)
+  price      Float?
+  date       DateTime? @db.DateTime(6)
+  currencyId Int?      @map("currency_id")
+
+  currency LkCurrency? @relation(fields: [currencyId], references: [currencyId])
+
+  @@index([currencyId], map: "FKskxth28rsvbtf5u0wousy5yua")
+  @@map("price_metals")
+}
+
+model PricePercentage {
+  id Int    @id @default(autoincrement())
+  pd Float?
+  pt Float?
+  rh Float?
+
+  @@map("price_percentage")
+}
+
+model Role {
+  id   Int     @id @default(autoincrement())
+  name String? @db.VarChar(20)
+
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model SettingUser {
+  id           BigInt  @id @default(autoincrement())
+  discount     Int?
+  name         String? @db.VarChar(255)
+  phone        String? @db.VarChar(255)
+  restDiscount Boolean @default(false) @map("rest_discount")
+  currencyId   Int?    @map("currency_id")
+  userId       BigInt? @map("user_id")
+
+  currency LkCurrency? @relation(fields: [currencyId], references: [currencyId])
+  user     User?       @relation(fields: [userId], references: [userId])
+
+  @@index([currencyId], map: "FKtcdits4f48e30tjo2c3vo0vvq")
+  @@index([userId], map: "FK9vevb34awv2142d167fidfkf4")
+  @@map("setting_user")
+}
+
+model User {
+  userId      BigInt    @id @default(autoincrement()) @map("user_id")
+  createdDate DateTime? @map("created_date") @db.DateTime(6)
+  email       String?   @db.VarChar(255)
+  lastAccess  DateTime? @map("last_access") @db.DateTime(6)
+  name        String?   @db.VarChar(255)
+  password    String?   @db.VarChar(255)
+  phone       String?   @db.VarChar(255)
+  username    String?   @db.VarChar(255)
+  statusId    Int?      @map("status_id")
+
+  status       LkStatus?      @relation(fields: [statusId], references: [statusId])
+  roles        UserRole[]
+  settings     SettingUser[]
+  subscription Subscription?
+  creditBalance CreditBalance?
+  creditLedger  CreditLedger[]
+  aiChats       AiChat[]
+
+  @@index([statusId], map: "FKnvs5s81l4sfm21yr9boop0hn5")
+  @@map("user")
+}
+
+model UserRole {
+  userId BigInt @map("user_id")
+  roleId Int    @map("role_id")
+
+  user User @relation(fields: [userId], references: [userId])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@index([roleId], map: "FKh8ciramu9cc9q3qcqiv4ue8a6")
+  @@map("user_roles")
+}
+
+// ============================================================
+// NEW TABLES (added for subscription/credits/AI system)
+// ============================================================
+
+model Plan {
+  id             Int      @id @default(autoincrement())
+  slug           String   @unique @db.VarChar(50)
+  name           String   @db.VarChar(100)
+  monthlyCredits Int      @map("monthly_credits")
+  priceCents     Int      @map("price_cents")
+  stripePriceId  String?  @map("stripe_price_id") @db.VarChar(255)
+  features       Json     @default("{}")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+model Subscription {
+  id                     Int      @id @default(autoincrement())
+  userId                 BigInt   @unique @map("user_id")
+  planId                 Int      @map("plan_id")
+  status                 String   @default("active") @db.VarChar(50)
+  provider               String   @default("stripe") @db.VarChar(50)
+  providerSubscriptionId String?  @map("provider_subscription_id") @db.VarChar(255)
+  currentPeriodStart     DateTime @map("current_period_start")
+  currentPeriodEnd       DateTime @map("current_period_end")
+  cancelAtPeriodEnd      Boolean  @default(false) @map("cancel_at_period_end")
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [userId])
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@index([planId])
+  @@map("subscriptions")
+}
+
+model CreditLedger {
+  id           Int       @id @default(autoincrement())
+  userId       BigInt    @map("user_id")
+  amount       Int
+  balanceAfter Int       @map("balance_after")
+  type         String    @db.VarChar(50)
+  sourceDetail String?   @map("source_detail") @db.VarChar(500)
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@index([userId, createdAt])
+  @@map("credit_ledger")
+}
+
+model CreditBalance {
+  userId         BigInt   @id @map("user_id")
+  available      Int      @default(0)
+  lifetimeEarned Int      @default(0) @map("lifetime_earned")
+  lifetimeSpent  Int      @default(0) @map("lifetime_spent")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@map("credit_balance")
+}
+
+model AiChat {
+  id        Int      @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  messages  Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@map("ai_chats")
+}
