@@ -20,10 +20,14 @@ export class CreditsController {
   @Get('ledger')
   async getLedger(
     @CurrentUser('userId') userId: number,
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    const result = await this.creditsService.getLedger(BigInt(userId), page, limit);
+    const result = await this.creditsService.getLedger(
+      BigInt(userId),
+      parseInt(page || '1', 10),
+      parseInt(limit || '20', 10),
+    );
     return { success: true, data: result };
   }
 

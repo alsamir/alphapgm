@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Res, Req, UseGuards, HttpCode, HttpStatus, Get } from '@nestjs/common';
 import { Response, Request } from 'express';
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Public } from '../../common/decorators/public.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -14,8 +15,9 @@ export class AuthController {
 
   @Public()
   @Post('register')
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   async register(
-    @Body() body: { email: string; username: string; password: string; name?: string; phone?: string },
+    @Body() body: { email: string; username: string; password: string; firstName?: string; lastName?: string; name?: string; phone?: string; turnstileToken?: string },
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.authService.register(body);
@@ -31,12 +33,13 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({ short: { ttl: 60000, limit: 5 } })
   @HttpCode(HttpStatus.OK)
   async login(
-    @Body() body: { email: string; password: string },
+    @Body() body: { email: string; password: string; turnstileToken?: string },
     @Res({ passthrough: true }) res: Response,
   ) {
-    const result = await this.authService.login(body.email, body.password);
+    const result = await this.authService.login(body.email, body.password, body.turnstileToken);
     this.setRefreshTokenCookie(res, result.tokens.refreshToken);
     return {
       success: true,

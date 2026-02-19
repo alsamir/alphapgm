@@ -97,6 +97,7 @@ model SettingUser {
   name         String? @db.VarChar(255)
   phone        String? @db.VarChar(255)
   restDiscount Boolean @default(false) @map("rest_discount")
+  language     String? @default("en") @db.VarChar(10)
   currencyId   Int?    @map("currency_id")
   userId       BigInt? @map("user_id")
 
@@ -114,6 +115,8 @@ model User {
   email       String?   @db.VarChar(255)
   lastAccess  DateTime? @map("last_access") @db.DateTime(6)
   name        String?   @db.VarChar(255)
+  firstName   String?   @map("first_name") @db.VarChar(255)
+  lastName    String?   @map("last_name") @db.VarChar(255)
   password    String?   @db.VarChar(255)
   phone       String?   @db.VarChar(255)
   username    String?   @db.VarChar(255)
@@ -126,6 +129,7 @@ model User {
   creditBalance CreditBalance?
   creditLedger  CreditLedger[]
   aiChats       AiChat[]
+  priceLists    PriceList[]
 
   @@index([statusId], map: "FKnvs5s81l4sfm21yr9boop0hn5")
   @@map("user")
@@ -221,4 +225,34 @@ model AiChat {
 
   @@index([userId])
   @@map("ai_chats")
+}
+
+model PriceList {
+  id        Int      @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  name      String   @db.VarChar(255)
+  status    String   @default("draft") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User            @relation(fields: [userId], references: [userId])
+  items PriceListItem[]
+
+  @@index([userId])
+  @@map("price_lists")
+}
+
+model PriceListItem {
+  id          Int    @id @default(autoincrement())
+  priceListId Int    @map("price_list_id")
+  converterId Int    @map("converter_id")
+  quantity    Int    @default(1)
+  unitPrice   Float? @map("unit_price")
+  totalPrice  Float? @map("total_price")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  priceList PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  @@index([priceListId])
+  @@map("price_list_items")
 }

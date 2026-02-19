@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
@@ -15,7 +15,32 @@ export class AuthService {
     private configService: ConfigService,
   ) {}
 
-  async register(data: { email: string; username: string; password: string; name?: string; phone?: string }) {
+  async verifyTurnstileToken(token: string): Promise<boolean> {
+    const secret = this.configService.get<string>('TURNSTILE_SECRET_KEY');
+    if (!secret || secret === 'placeholder') {
+      this.logger.warn('Turnstile secret not configured, skipping verification');
+      return true;
+    }
+
+    try {
+      const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ secret, response: token }),
+      });
+      const data = await response.json();
+      return data.success === true;
+    } catch (error) {
+      this.logger.error('Turnstile verification failed', error);
+      return false;
+    }
+  }
+
+  async register(data: { email: string; username: string; password: string; firstName?: string; lastName?: string; name?: string; phone?: string; turnstileToken?: string }) {
+    if (data.turnstileToken) {
+      const valid = await this.verifyTurnstileToken(data.turnstileToken);
+      if (!valid) throw new BadRequestException('Bot verification failed');
+    }
     // Check if email or username already exists
     const existing = await this.prisma.user.findFirst({
       where: {
@@ -35,12 +60,18 @@ export class AuthService {
     const userRole = await this.prisma.role.findFirst({ where: { name: 'ROLE_USER' } });
 
     const user = await this.prisma.$transaction(async (tx) => {
+      const firstName = data.firstName || null;
+      const lastName = data.lastName || null;
+      const fullName = data.name || [firstName, lastName].filter(Boolean).join(' ') || null;
+
       const newUser = await tx.user.create({
         data: {
           email: data.email,
           username: data.username,
           password: hashedPassword,
-          name: data.name || null,
+          name: fullName,
+          firstName,
+          lastName,
           phone: data.phone || null,
           statusId: 1, // Active
           createdDate: new Date(),
@@ -98,18 +129,26 @@ export class AuthService {
         email: user.email,
         username: user.username,
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         roles,
       },
       tokens,
     };
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, turnstileToken?: string) {
+    if (turnstileToken) {
+      const valid = await this.verifyTurnstileToken(turnstileToken);
+      if (!valid) throw new BadRequestException('Bot verification failed');
+    }
+
     const user = await this.prisma.user.findFirst({
       where: { email },
       include: {
         roles: { include: { role: true } },
         subscription: { include: { plan: true } },
+        settings: true,
       },
     });
 
@@ -138,7 +177,10 @@ export class AuthService {
         email: user.email,
         username: user.username,
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
         roles,
+        language: user.settings[0]?.language || 'en',
       },
       tokens,
     };
@@ -188,6 +230,7 @@ export class AuthService {
       include: {
         roles: { include: { role: true } },
         subscription: { include: { plan: true } },
+        settings: true,
       },
     });
 
@@ -198,8 +241,11 @@ export class AuthService {
       email: user.email,
       username: user.username,
       name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       roles: user.roles.map((ur) => ur.role.name),
       planSlug: user.subscription?.plan?.slug || 'free',
+      language: user.settings[0]?.language || 'en',
     };
   }
 }

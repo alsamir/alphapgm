@@ -22,13 +22,17 @@ export class UsersService {
       email: user.email,
       username: user.username,
       name: user.name,
+      firstName: user.firstName,
+      lastName: user.lastName,
       phone: user.phone,
       createdAt: user.createdDate,
       roles: user.roles.map((ur) => ur.role.name),
+      language: user.settings[0]?.language || 'en',
       settings: user.settings[0] ? {
         discount: user.settings[0].discount,
         restDiscount: user.settings[0].restDiscount,
         currency: user.settings[0].currency,
+        language: user.settings[0].language,
       } : null,
       subscription: user.subscription ? {
         plan: user.subscription.plan,
@@ -44,17 +48,26 @@ export class UsersService {
     };
   }
 
-  async updateProfile(userId: bigint, data: { name?: string; phone?: string }) {
+  async updateProfile(userId: bigint, data: { name?: string; firstName?: string; lastName?: string; phone?: string }) {
+    const updateData: any = {};
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.firstName !== undefined) updateData.firstName = data.firstName;
+    if (data.lastName !== undefined) updateData.lastName = data.lastName;
+    // Keep name in sync
+    if (data.firstName !== undefined || data.lastName !== undefined) {
+      const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ');
+      updateData.name = fullName || data.name || null;
+    } else if (data.name !== undefined) {
+      updateData.name = data.name;
+    }
+
     return this.prisma.user.update({
       where: { userId },
-      data: {
-        name: data.name,
-        phone: data.phone,
-      },
+      data: updateData,
     });
   }
 
-  async updateSettings(userId: bigint, data: { discount?: number; currencyId?: number; restDiscount?: boolean }) {
+  async updateSettings(userId: bigint, data: { discount?: number; currencyId?: number; restDiscount?: boolean; language?: string }) {
     const settings = await this.prisma.settingUser.findFirst({ where: { userId } });
     if (settings) {
       return this.prisma.settingUser.update({
@@ -63,7 +76,13 @@ export class UsersService {
       });
     }
     return this.prisma.settingUser.create({
-      data: { userId, discount: data.discount || 0, restDiscount: data.restDiscount || false, currencyId: data.currencyId || 1 },
+      data: {
+        userId,
+        discount: data.discount || 0,
+        restDiscount: data.restDiscount || false,
+        currencyId: data.currencyId || 1,
+        language: data.language || 'en',
+      },
     });
   }
 
@@ -100,6 +119,8 @@ export class UsersService {
       email: u.email,
       username: u.username,
       name: u.name,
+      firstName: u.firstName,
+      lastName: u.lastName,
       status: u.status?.descEn,
       roles: u.roles.map((ur) => ur.role.name),
       plan: u.subscription?.plan?.name || 'Free',

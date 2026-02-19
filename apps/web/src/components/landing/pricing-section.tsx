@@ -1,11 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+import { CurrencySelector, useCurrency } from '@/components/ui/currency-selector';
 
 const plans = [
   {
@@ -47,14 +49,20 @@ const plans = [
 ];
 
 export function PricingSection() {
+  const t = useTranslations('pricing');
+  const { format: formatPrice } = useCurrency();
+
   return (
     <section className="py-20 bg-card/20" id="pricing">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Simple, Transparent <span className="text-primary">Pricing</span>
+            {t('title')} <span className="text-primary">{t('titleHighlight')}</span>
           </h2>
-          <p className="text-muted-foreground">Choose the plan that fits your needs</p>
+          <p className="text-muted-foreground">{t('subtitle')}</p>
+          <div className="flex justify-center mt-4">
+            <CurrencySelector />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -70,18 +78,18 @@ export function PricingSection() {
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    {plan.popular && <Badge>Most Popular</Badge>}
+                    {plan.popular && <Badge>{t('popular')}</Badge>}
                   </div>
                   <div className="mt-3">
                     <span className="text-4xl font-bold">
-                      {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                      {plan.price === 0 ? 'Free' : formatPrice(plan.price)}
                     </span>
-                    {plan.price > 0 && <span className="text-muted-foreground text-sm">/month</span>}
+                    {plan.price > 0 && <span className="text-muted-foreground text-sm">{t('month')}</span>}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
                   <div className="mt-2 text-sm">
                     <span className="text-primary font-medium">{plan.credits}</span>
-                    <span className="text-muted-foreground"> credits</span>
+                    <span className="text-muted-foreground"> {t('credits')}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1">
@@ -95,11 +103,11 @@ export function PricingSection() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Link href="/register" className="w-full">
-                    <Button variant={plan.popular ? 'default' : 'outline'} className="w-full">
-                      {plan.price === 0 ? 'Get Started' : 'Subscribe'}
-                    </Button>
-                  </Link>
+                  <Button variant={plan.popular ? 'default' : 'outline'} className="w-full" asChild>
+                    <Link href="/register">
+                      {plan.price === 0 ? t('getStarted') : t('subscribe')}
+                    </Link>
+                  </Button>
                 </CardFooter>
               </Card>
             </motion.div>

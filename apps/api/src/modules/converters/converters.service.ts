@@ -202,6 +202,11 @@ export class ConvertersService {
     return { imported, errors, total: records.length };
   }
 
+  async getUserDiscount(userId: bigint): Promise<number> {
+    const settings = await this.prisma.settingUser.findFirst({ where: { userId } });
+    return settings?.discount || 0;
+  }
+
   private sanitizeConverter(converter: any) {
     return {
       id: converter.id,
@@ -210,10 +215,73 @@ export class ConvertersService {
       urlPath: converter.urlPath,
       brand: converter.brand,
       weight: converter.weight,
+      imageUrl: converter.imageUrl || null,
       brandImage: converter.brandImage,
       createdDate: converter.createdDate,
-      // Note: pt, pd, rh, prices, imageUrl are NOT exposed in list views
+      // Note: pt, pd, rh, prices are NOT exposed in public list views
       // They require auth + credit deduction (detail view)
+    };
+  }
+
+  async searchFull(params: {
+    query?: string;
+    brand?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
+    const page = params.page || 1;
+    const limit = Math.min(params.limit || 25, 100);
+    const skip = (page - 1) * limit;
+
+    const where: Prisma.AllDataWhereInput = {};
+    if (params.brand) {
+      where.brand = { equals: params.brand };
+    }
+    if (params.query) {
+      where.OR = [
+        { name: { contains: params.query } },
+        { keywords: { contains: params.query } },
+        { nameModified: { contains: params.query } },
+      ];
+    }
+
+    const orderBy: Prisma.AllDataOrderByWithRelationInput = {};
+    const sortField = params.sortBy || 'name';
+    if (sortField === 'name' || sortField === 'brand') {
+      orderBy[sortField] = params.sortOrder || 'asc';
+    } else {
+      orderBy.name = 'asc';
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.allData.findMany({ where, orderBy, skip, take: limit + 1 }),
+      this.prisma.allData.count({ where }),
+    ]);
+
+    const hasMore = data.length > limit;
+    const results = hasMore ? data.slice(0, limit) : data;
+
+    return {
+      data: results.map((c) => ({
+        id: c.id,
+        name: c.name,
+        nameModified: c.nameModified,
+        urlPath: c.urlPath,
+        brand: c.brand,
+        weight: c.weight,
+        pt: c.pt,
+        pd: c.pd,
+        rh: c.rh,
+        keywords: c.keywords,
+        imageUrl: c.imageUrl || null,
+        brandImage: c.brandImage,
+      })),
+      page,
+      limit,
+      hasMore,
+      total,
     };
   }
 }

@@ -10,25 +10,29 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { LogIn, Eye, EyeOff } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Turnstile } from '@/components/auth/turnstile';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, turnstileToken || undefined);
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password');
+      setError(err.message || t('invalidCredentials'));
     } finally {
       setLoading(false);
     }
@@ -48,8 +52,8 @@ export default function LoginPage() {
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
                 <LogIn className="h-6 w-6 text-primary" />
               </div>
-              <CardTitle className="text-2xl">Welcome Back</CardTitle>
-              <CardDescription>Sign in to access converter pricing</CardDescription>
+              <CardTitle className="text-2xl">{t('loginTitle')}</CardTitle>
+              <CardDescription>{t('loginSubtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -59,10 +63,10 @@ export default function LoginPage() {
                   </div>
                 )}
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Email</label>
+                  <label className="text-sm font-medium mb-1.5 block">{t('email')}</label>
                   <Input
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={t('emailPlaceholder')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -70,11 +74,11 @@ export default function LoginPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1.5 block">Password</label>
+                  <label className="text-sm font-medium mb-1.5 block">{t('password')}</label>
                   <div className="relative">
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
+                      placeholder={t('passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -89,12 +93,13 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
+                <Turnstile onSuccess={setTurnstileToken} onExpire={() => setTurnstileToken('')} />
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? t('signingIn') : t('signInButton')}
                 </Button>
                 <p className="text-center text-sm text-muted-foreground">
-                  Don&apos;t have an account?{' '}
-                  <Link href="/register" className="text-primary hover:underline">Create one</Link>
+                  {t('noAccount')}{' '}
+                  <Link href="/register" className="text-primary hover:underline">{t('createOne')}</Link>
                 </p>
               </form>
             </CardContent>

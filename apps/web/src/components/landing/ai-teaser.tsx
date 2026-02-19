@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Bot, MessageSquare, ArrowRight } from 'lucide-react';
@@ -13,6 +14,8 @@ const sampleMessages = [
 ];
 
 export function AiTeaser() {
+  const t = useTranslations('aiTeaser');
+
   return (
     <section className="py-20 bg-background relative overflow-hidden">
       <div className="absolute inset-0 opacity-20">
@@ -24,28 +27,27 @@ export function AiTeaser() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 mb-6">
               <Bot className="h-4 w-4 text-accent" />
-              <span className="text-sm text-accent">AI-Powered</span>
+              <span className="text-sm text-accent">{t('badge')}</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Ask Our AI About
-              <span className="text-accent"> Any Converter</span>
+              {t('title')}
+              <span className="text-accent">{t('titleHighlight')}</span>
             </h2>
             <p className="text-muted-foreground mb-8">
-              Get instant pricing, comparisons, and insights powered by AI.
-              Simply ask a question in natural language.
+              {t('description')}
             </p>
-            <Link href="/register">
-              <Button variant="accent" size="lg" className="group">
-                Try AI Assistant
+            <Button variant="accent" size="lg" className="group" asChild>
+              <Link href="/register">
+                {t('cta')}
                 <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
 
           <Card className="bg-card border-border/50 p-4 overflow-hidden">
             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
               <MessageSquare className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">AI Chat</span>
+              <span className="text-sm font-medium">{t('chatTitle')}</span>
             </div>
             <div className="space-y-3">
               {sampleMessages.map((msg, i) => (
@@ -74,7 +76,7 @@ export function AiTeaser() {
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
-                AI is typing...
+                {t('typing')}
               </div>
             </div>
           </Card>

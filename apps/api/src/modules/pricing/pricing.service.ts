@@ -78,6 +78,12 @@ export class PricingService {
     const rhContent = parseDecimalString(converter.rh);
     const weight = parseDecimalString(converter.weight);
 
+    // DB stores recovery percentages as decimals (0.85 = 85%), but
+    // calculateConverterPrice expects 0-100 range
+    const recoveryPt = (percentages.pt || 0) <= 1 ? (percentages.pt || 0) * 100 : (percentages.pt || 0);
+    const recoveryPd = (percentages.pd || 0) <= 1 ? (percentages.pd || 0) * 100 : (percentages.pd || 0);
+    const recoveryRh = (percentages.rh || 0) <= 1 ? (percentages.rh || 0) * 100 : (percentages.rh || 0);
+
     const result = calculateConverterPrice({
       ptContent,
       pdContent,
@@ -85,9 +91,9 @@ export class PricingService {
       ptSpotPrice: metals.platinum?.price || 0,
       pdSpotPrice: metals.palladium?.price || 0,
       rhSpotPrice: metals.rhodium?.price || 0,
-      recoveryPt: percentages.pt || 0,
-      recoveryPd: percentages.pd || 0,
-      recoveryRh: percentages.rh || 0,
+      recoveryPt,
+      recoveryPd,
+      recoveryRh,
       weight: weight || 1,
       discount: userDiscount,
     });
@@ -101,9 +107,9 @@ export class PricingService {
       ptPrice: metals.platinum?.price || 0,
       pdPrice: metals.palladium?.price || 0,
       rhPrice: metals.rhodium?.price || 0,
-      recoveryPt: percentages.pt || 0,
-      recoveryPd: percentages.pd || 0,
-      recoveryRh: percentages.rh || 0,
+      recoveryPt,
+      recoveryPd,
+      recoveryRh,
       currency: 'USD',
     };
   }

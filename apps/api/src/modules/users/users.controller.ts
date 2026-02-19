@@ -22,7 +22,7 @@ export class UsersController {
   @Put('profile')
   async updateProfile(
     @CurrentUser('userId') userId: number,
-    @Body() body: { name?: string; phone?: string },
+    @Body() body: { name?: string; firstName?: string; lastName?: string; phone?: string },
   ) {
     const result = await this.usersService.updateProfile(BigInt(userId), body);
     return { success: true, data: result };
@@ -31,10 +31,17 @@ export class UsersController {
   @Put('settings')
   async updateSettings(
     @CurrentUser('userId') userId: number,
-    @Body() body: { discount?: number; currencyId?: number; restDiscount?: boolean },
+    @Body() body: { discount?: number; currencyId?: number; restDiscount?: boolean; language?: string },
   ) {
     const result = await this.usersService.updateSettings(BigInt(userId), body);
-    return { success: true, data: result };
+    return {
+      success: true,
+      data: {
+        ...result,
+        id: Number(result.id),
+        userId: result.userId ? Number(result.userId) : null,
+      },
+    };
   }
 
   @Get()

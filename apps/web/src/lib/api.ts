@@ -11,6 +11,12 @@ interface ApiResponse<T = any> {
   message?: string;
 }
 
+interface AuthTokenResponse {
+  accessToken?: string;
+  tokens?: { accessToken: string };
+  user?: any;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -45,22 +51,22 @@ class ApiClient {
   }
 
   // Auth
-  async login(email: string, password: string) {
-    return this.request<{ accessToken: string; user: any }>('/auth/login', {
+  async login(email: string, password: string, turnstileToken?: string) {
+    return this.request<AuthTokenResponse>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     });
   }
 
-  async register(data: { email: string; username: string; password: string; name?: string; phone?: string }) {
-    return this.request<{ accessToken: string; user: any }>('/auth/register', {
+  async register(data: { email: string; username: string; password: string; firstName?: string; lastName?: string; name?: string; phone?: string; turnstileToken?: string }) {
+    return this.request<AuthTokenResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async refreshToken() {
-    return this.request<{ accessToken: string }>('/auth/refresh', {
+    return this.request<AuthTokenResponse>('/auth/refresh', {
       method: 'POST',
     });
   }
@@ -88,12 +94,63 @@ class ApiClient {
   }
 
   async getBrands(token?: string) {
-    return this.request<{ brand: string; count: number }[]>('/converters/brands', { token });
+    return this.request<{ name: string; brand: string; count: number }[]>('/converters/brands', { token });
+  }
+
+  async createConverter(data: any, token: string) {
+    return this.request<any>('/converters', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async updateConverter(id: number, data: any, token: string) {
+    return this.request<any>(`/converters/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async deleteConverter(id: number, token: string) {
+    return this.request<any>(`/converters/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async importConverters(records: any[], token: string) {
+    return this.request<any>('/converters/import', {
+      method: 'POST',
+      body: JSON.stringify({ records }),
+      token,
+    });
   }
 
   // Pricing
   async getMetalPrices() {
     return this.request<any[]>('/pricing/metals');
+  }
+
+  async getRecoveryPercentages(token: string) {
+    return this.request<{ pt: number; pd: number; rh: number }>('/pricing/percentage', { token });
+  }
+
+  async updateRecoveryPercentages(data: { pt: number; pd: number; rh: number }, token: string) {
+    return this.request<any>('/pricing/percentage', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async updateMetalPrice(metalId: number, price: number, token: string) {
+    return this.request<any>(`/pricing/metals/${metalId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ price }),
+      token,
+    });
   }
 
   // Subscriptions
@@ -157,6 +214,55 @@ class ApiClient {
     return this.request<any[]>('/ai/history', { token });
   }
 
+  async getAiChat(chatId: number, token: string) {
+    return this.request<any>(`/ai/chat/${chatId}`, { token });
+  }
+
+  async createCreditTopup(quantity: number, token: string) {
+    return this.request<{ url: string }>('/credits/topup', {
+      method: 'POST',
+      body: JSON.stringify({ quantity }),
+      token,
+    });
+  }
+
+  // Admin - Converters (full data with pt/pd/rh)
+  async adminSearchConverters(params: Record<string, any>, token: string) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.set(key, String(value));
+      }
+    });
+    return this.request<{ data: any[]; page: number; limit: number; hasMore: boolean; total: number }>(
+      `/admin/converters?${query.toString()}`,
+      { token },
+    );
+  }
+
+  // Admin - Credits
+  async getAdminCreditStats(token: string) {
+    return this.request<any>('/admin/credits/stats', { token });
+  }
+
+  async getAdminCreditLedger(params: Record<string, any>, token: string) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.set(key, String(value));
+      }
+    });
+    return this.request<any>(`/admin/credits/ledger?${query.toString()}`, { token });
+  }
+
+  async adjustUserCredits(data: { userId: number; amount: number; reason: string }, token: string) {
+    return this.request<any>('/admin/credits/adjust', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
   // Admin
   async getAdminDashboard(token: string) {
     return this.request<any>('/admin/dashboard', { token });
@@ -172,6 +278,85 @@ class ApiClient {
       if (value !== undefined && value !== null) query.set(key, String(value));
     });
     return this.request<any>(`/users?${query.toString()}`, { token });
+  }
+
+  async updateUserRole(userId: number, roleId: number, token: string) {
+    return this.request<any>(`/users/${userId}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ roleId }),
+      token,
+    });
+  }
+
+  async updateUserStatus(userId: number, statusId: number, token: string) {
+    return this.request<any>(`/users/${userId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ statusId }),
+      token,
+    });
+  }
+
+  // Admin - Password Reset
+  async resetUserPassword(userId: number, password: string | undefined, token: string) {
+    return this.request<{ temporaryPassword: string }>(`/admin/users/${userId}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ password }),
+      token,
+    });
+  }
+
+  // Admin - User History
+  async getUserHistory(userId: number, token: string) {
+    return this.request<any>(`/admin/users/${userId}/history`, { token });
+  }
+
+  // Price Lists
+  async getPriceLists(token: string) {
+    return this.request<any[]>('/pricelists', { token });
+  }
+
+  async getPriceList(id: number, token: string) {
+    return this.request<any>(`/pricelists/${id}`, { token });
+  }
+
+  async createPriceList(name: string, token: string) {
+    return this.request<any>('/pricelists', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+      token,
+    });
+  }
+
+  async deletePriceList(id: number, token: string) {
+    return this.request<any>(`/pricelists/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async addPriceListItem(priceListId: number, converterId: number, quantity: number, token: string) {
+    return this.request<any>(`/pricelists/${priceListId}/items`, {
+      method: 'POST',
+      body: JSON.stringify({ converterId, quantity }),
+      token,
+    });
+  }
+
+  async removePriceListItem(priceListId: number, itemId: number, token: string) {
+    return this.request<any>(`/pricelists/${priceListId}/items/${itemId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async exportPriceList(priceListId: number, token: string) {
+    // Returns raw response for PDF download
+    const response = await fetch(`${this.baseUrl}/api/v1/pricelists/${priceListId}/export`, {
+      headers: { 'Authorization': `Bearer ${token}` },
+      credentials: 'include',
+    });
+    if (!response.ok) throw new ApiError('Export failed', response.status);
+    return response.blob();
   }
 }
 

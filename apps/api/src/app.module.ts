@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -11,11 +12,18 @@ import { ImagesModule } from './modules/images/images.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { UsersModule } from './modules/users/users.module';
+import { PriceListsModule } from './modules/pricelists/pricelists.module';
 import { RedisModule } from './common/redis/redis.module';
 import { HealthController } from './health.controller';
 
 @Module({
   controllers: [HealthController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
@@ -37,6 +45,7 @@ import { HealthController } from './health.controller';
     ImagesModule,
     AiModule,
     AdminModule,
+    PriceListsModule,
   ],
 })
 export class AppModule {}

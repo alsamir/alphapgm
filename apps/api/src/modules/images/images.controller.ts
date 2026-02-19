@@ -7,12 +7,32 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Images')
 @Controller('images')
 export class ImagesController {
   constructor(private imagesService: ImagesService) {}
 
+  // Public thumbnail - no watermark, for catalogue listing
+  @Public()
+  @Get('thumb/:converterId')
+  async getThumbnail(
+    @Param('converterId', ParseIntPipe) converterId: number,
+    @Res() res: Response,
+  ) {
+    try {
+      const result = await this.imagesService.getConverterImage(converterId);
+      if (!result) return res.status(404).json({ success: false, message: 'Image not found' });
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.send(result.buffer);
+    } catch {
+      return res.status(404).json({ success: false, message: 'Image not found' });
+    }
+  }
+
+  // Authenticated image - watermarked with user email
   @Get(':converterId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -21,13 +41,15 @@ export class ImagesController {
     @CurrentUser('email') email: string,
     @Res() res: Response,
   ) {
-    const result = await this.imagesService.getConverterImage(converterId, email);
-    if (!result) {
+    try {
+      const result = await this.imagesService.getConverterImage(converterId, email);
+      if (!result) return res.status(404).json({ success: false, message: 'Image not found' });
+      res.setHeader('Content-Type', result.contentType);
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      res.send(result.buffer);
+    } catch {
       return res.status(404).json({ success: false, message: 'Image not found' });
     }
-    res.setHeader('Content-Type', result.contentType);
-    res.setHeader('Cache-Control', 'private, max-age=3600');
-    res.send(result.buffer);
   }
 
   @Post('upload')

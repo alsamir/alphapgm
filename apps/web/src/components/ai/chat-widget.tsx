@@ -16,8 +16,11 @@ interface Message {
 }
 
 export function ChatWidget() {
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated, isLoading, token } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -52,6 +55,9 @@ export function ChatWidget() {
       setLoading(false);
     }
   };
+
+  // Don't render until client-side hydration is complete
+  if (!mounted || isLoading) return null;
 
   return (
     <>
@@ -95,9 +101,9 @@ export function ChatWidget() {
                   <div className="text-center py-8">
                     <Bot className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground mb-3">Sign in to use the AI assistant</p>
-                    <Link href="/login">
-                      <Button size="sm">Sign In</Button>
-                    </Link>
+                    <Button size="sm" asChild>
+                      <Link href="/login">Sign In</Link>
+                    </Button>
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="text-center py-8">

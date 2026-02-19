@@ -5,6 +5,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WatermarkService } from './watermark.service';
 import { RedisService } from '../../common/redis/redis.service';
 import { Readable } from 'stream';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const sharp = require('sharp');
 
 @Injectable()
 export class ImagesService {
@@ -25,7 +27,7 @@ export class ImagesService {
     this.bucket = this.configService.get('DO_SPACES_BUCKET', 'catalyser-images');
     this.cdnUrl = this.configService.get('DO_SPACES_CDN_URL', '');
 
-    if (key && secret && endpoint && key !== 'your-spaces-key') {
+    if (key && secret && endpoint && key !== 'your-spaces-key' && key !== 'placeholder') {
       this.s3Client = new S3Client({
         endpoint,
         region: 'us-east-1',
@@ -65,10 +67,11 @@ export class ImagesService {
         imageBuffer = Buffer.concat(chunks);
       } catch (err) {
         this.logger.warn(`Failed to fetch image from S3: ${err}`);
-        throw new NotFoundException('Image not available');
+        imageBuffer = await this.generatePlaceholderImage(converter.name, converter.brand);
       }
     } else {
-      throw new NotFoundException('Image storage not configured');
+      // S3 not configured - generate a placeholder image with converter info
+      imageBuffer = await this.generatePlaceholderImage(converter.name, converter.brand);
     }
 
     // Apply watermark if user is authenticated
@@ -79,6 +82,28 @@ export class ImagesService {
     }
 
     return { buffer: imageBuffer, contentType: 'image/jpeg' };
+  }
+
+  private async generatePlaceholderImage(name: string, brand: string): Promise<Buffer> {
+    // sharp imported at top level
+    const width = 600;
+    const height = 450;
+    const escapedName = name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const escapedBrand = brand.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Truncate long names
+    const displayName = escapedName.length > 30 ? escapedName.slice(0, 27) + '...' : escapedName;
+
+    const svg = `
+      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="#1a1a2e"/>
+        <rect x="20" y="20" width="${width - 40}" height="${height - 40}" rx="12" fill="#16213e" stroke="#0f3460" stroke-width="2"/>
+        <text x="50%" y="40%" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#e94560" font-weight="bold">${escapedBrand}</text>
+        <text x="50%" y="55%" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#eee">${displayName}</text>
+        <text x="50%" y="75%" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#888">CATALYSER</text>
+      </svg>
+    `;
+
+    return sharp(Buffer.from(svg)).jpeg({ quality: 80 }).toBuffer();
   }
 
   async uploadImage(file: Buffer, filename: string): Promise<string> {

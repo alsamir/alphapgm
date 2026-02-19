@@ -21,7 +21,15 @@ export class CreditsService {
 
   async getBalance(userId: bigint) {
     const balance = await this.prisma.creditBalance.findUnique({ where: { userId } });
-    return balance || { userId: Number(userId), available: 0, lifetimeEarned: 0, lifetimeSpent: 0 };
+    if (!balance) {
+      return { userId: Number(userId), available: 0, lifetimeEarned: 0, lifetimeSpent: 0 };
+    }
+    return {
+      userId: Number(balance.userId),
+      available: balance.available,
+      lifetimeEarned: balance.lifetimeEarned,
+      lifetimeSpent: balance.lifetimeSpent,
+    };
   }
 
   async getLedger(userId: bigint, page: number = 1, limit: number = 20) {
@@ -34,8 +42,17 @@ export class CreditsService {
     });
 
     const hasMore = entries.length > limit;
+    const data = (hasMore ? entries.slice(0, limit) : entries).map((e) => ({
+      id: e.id,
+      userId: Number(e.userId),
+      amount: e.amount,
+      balanceAfter: e.balanceAfter,
+      type: e.type,
+      sourceDetail: e.sourceDetail,
+      createdAt: e.createdAt.toISOString(),
+    }));
     return {
-      data: hasMore ? entries.slice(0, limit) : entries,
+      data,
       page,
       limit,
       hasMore,
