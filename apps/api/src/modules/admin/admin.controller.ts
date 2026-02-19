@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Query, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { ConvertersService } from '../converters/converters.service';
@@ -90,6 +90,15 @@ export class AdminController {
   @Get('users/:id/pricelists')
   async getUserPriceLists(@Param('id', ParseIntPipe) id: number) {
     const result = await this.adminService.getUserPriceLists(id);
+    return { success: true, data: result };
+  }
+
+  @Put('users/:id/discount')
+  async updateUserDiscount(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { discount: number },
+  ) {
+    const result = await this.adminService.updateUserDiscount(id, body.discount);
     return { success: true, data: result };
   }
 

@@ -269,6 +269,7 @@
     "discount": "الخصم",
     "percentOff": "خصم {percent}%",
     "discountDescription": "يُطبق على حسابات أسعار المحولات",
+    "setByAdmin": "يحدده المسؤول",
     "applyDiscountToRest": "تطبيق الخصم على القيمة المتبقية",
     "settingsUpdated": "تم تحديث الإعدادات بنجاح",
     "settingsUpdateFailed": "فشل تحديث الإعدادات",

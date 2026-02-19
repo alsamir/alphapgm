@@ -72,9 +72,6 @@ export function BrandCarousel() {
                   <span className="text-sm font-medium text-muted-foreground">
                     {brand.name}
                   </span>
-                  <span className="text-[10px] text-muted-foreground/50">
-                    {brand.count}
-                  </span>
                 </div>
               ))}
             </motion.div>
@@ -100,9 +97,6 @@ export function BrandCarousel() {
                   />
                   <span className="text-sm font-medium text-muted-foreground">
                     {brand.name}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/50">
-                    {brand.count}
                   </span>
                 </div>
               ))}

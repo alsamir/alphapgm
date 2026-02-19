@@ -269,6 +269,7 @@
     "discount": "Rabatt",
     "percentOff": "{percent}% Rabatt",
     "discountDescription": "Wird auf Katalysator-Preisberechnungen angewendet",
+    "setByAdmin": "Vom Administrator festgelegt",
     "applyDiscountToRest": "Rabatt auf Restwert anwenden",
     "settingsUpdated": "Einstellungen erfolgreich aktualisiert",
     "settingsUpdateFailed": "Einstellungen konnten nicht aktualisiert werden",

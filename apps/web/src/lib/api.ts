@@ -93,6 +93,10 @@ class ApiClient {
     return this.request<any>(`/converters/${id}`, { token });
   }
 
+  async getConverterPreview(id: number) {
+    return this.request<any>(`/converters/${id}/preview`);
+  }
+
   async getBrands(token?: string) {
     return this.request<{ name: string; count: number; brandImage?: string | null }[]>('/converters/brands', { token });
   }
@@ -365,6 +369,15 @@ class ApiClient {
     });
     if (!response.ok) throw new ApiError('Export failed', response.status);
     return response.blob();
+  }
+
+  // Admin - User Discount
+  async updateUserDiscount(userId: number, discount: number, token: string) {
+    return this.request<any>(`/admin/users/${userId}/discount`, {
+      method: 'PUT',
+      body: JSON.stringify({ discount }),
+      token,
+    });
   }
 
   // Admin - User Price Lists

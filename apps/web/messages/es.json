@@ -269,6 +269,7 @@
     "discount": "Descuento",
     "percentOff": "{percent}% de descuento",
     "discountDescription": "Aplicado a los cálculos de precios de catalizadores",
+    "setByAdmin": "Establecido por el administrador",
     "applyDiscountToRest": "Aplicar descuento al valor residual",
     "settingsUpdated": "Configuración actualizada correctamente",
     "settingsUpdateFailed": "Error al actualizar la configuración",

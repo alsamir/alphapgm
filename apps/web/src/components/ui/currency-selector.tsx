@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import {
   Select,
   SelectContent,
@@ -15,8 +15,25 @@ import {
   convertFromUSD,
   formatCurrency,
 } from '@/lib/currency';
+import { useAuth } from '@/lib/auth-context';
+import { api } from '@/lib/api';
 
 const STORAGE_KEY = 'catapp_currency';
+
+// Map DB currency IDs to currency codes
+const CURRENCY_ID_MAP: Record<number, string> = {
+  1: 'USD',
+  2: 'EUR',
+  3: 'GBP',
+  4: 'TRY',
+  5: 'AED',
+  6: 'SAR',
+  7: 'MAD',
+};
+
+const CURRENCY_CODE_TO_ID: Record<string, number> = Object.fromEntries(
+  Object.entries(CURRENCY_ID_MAP).map(([id, code]) => [code, Number(id)])
+);
 
 interface CurrencyContextType {
   currency: string;
@@ -30,6 +47,8 @@ const CurrencyContext = createContext<CurrencyContextType | null>(null);
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<string>(DEFAULT_CURRENCY);
   const [mounted, setMounted] = useState(false);
+  const { token, isAuthenticated, isLoading } = useAuth();
+  const syncedRef = useRef(false);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -42,13 +61,43 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Sync currency from user profile when authenticated
+  useEffect(() => {
+    if (isLoading || !isAuthenticated || !token || syncedRef.current) return;
+    syncedRef.current = true;
+    api.getProfile(token).then((res) => {
+      const currencyId = res.data?.settings?.currencyId;
+      if (currencyId && CURRENCY_ID_MAP[currencyId]) {
+        const code = CURRENCY_ID_MAP[currencyId];
+        setCurrencyState(code);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, code);
+        }
+      }
+    }).catch(() => {});
+  }, [isLoading, isAuthenticated, token]);
+
+  // Reset sync flag on logout
+  useEffect(() => {
+    if (!isAuthenticated) {
+      syncedRef.current = false;
+    }
+  }, [isAuthenticated]);
+
   const setCurrency = useCallback((code: string) => {
     if (!CURRENCIES[code]) return;
     setCurrencyState(code);
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEY, code);
     }
-  }, []);
+    // Also save to user profile if authenticated
+    if (token) {
+      const currencyId = CURRENCY_CODE_TO_ID[code];
+      if (currencyId) {
+        api.updateSettings({ currencyId }, token).catch(() => {});
+      }
+    }
+  }, [token]);
 
   const convert = useCallback(
     (amountUSD: number) => convertFromUSD(amountUSD, currency),

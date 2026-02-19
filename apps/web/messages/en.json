@@ -269,6 +269,7 @@
     "discount": "Discount",
     "percentOff": "{percent}% off",
     "discountDescription": "Applied to converter price calculations",
+    "setByAdmin": "Set by admin",
     "applyDiscountToRest": "Apply discount to rest value",
     "settingsUpdated": "Settings updated successfully",
     "settingsUpdateFailed": "Failed to update settings",

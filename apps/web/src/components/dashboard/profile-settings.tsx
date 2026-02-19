@@ -82,7 +82,7 @@ export function ProfileSettings({ profile }: Props) {
     setSavingSettings(true);
     setSettingsMessage('');
     try {
-      await api.updateSettings({ discount, currencyId, restDiscount }, token);
+      await api.updateSettings({ currencyId }, token);
       setSettingsMessage(t('settingsUpdated'));
     } catch (err: any) {
       setSettingsMessage(err.message || t('settingsUpdateFailed'));
@@ -227,53 +227,21 @@ export function ProfileSettings({ profile }: Props) {
               </select>
             </div>
 
-            {/* Discount Display */}
-            <div>
-              <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5">
-                <Percent className="h-3.5 w-3.5 text-muted-foreground" />
-                {t('discount')}
-              </label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={0.5}
-                  value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
-                  className="bg-background w-32"
-                />
-                <span className="text-sm text-muted-foreground">%</span>
-                {discount > 0 && (
+            {/* Discount Display (read-only, set by admin) */}
+            {discount > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1.5 flex items-center gap-1.5">
+                  <Percent className="h-3.5 w-3.5 text-muted-foreground" />
+                  {t('discount')}
+                </label>
+                <div className="flex items-center gap-3">
                   <Badge variant="accent" className="text-xs">
                     {t('percentOff', { percent: discount })}
                   </Badge>
-                )}
+                  <span className="text-xs text-muted-foreground">{t('setByAdmin')}</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('discountDescription')}
-              </p>
-            </div>
-
-            {/* Rest Discount Toggle */}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                role="switch"
-                aria-checked={restDiscount}
-                onClick={() => setRestDiscount(!restDiscount)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  restDiscount ? 'bg-primary' : 'bg-secondary'
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${
-                    restDiscount ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <label className="text-sm font-medium">{t('applyDiscountToRest')}</label>
-            </div>
+            )}
 
             {settingsMessage && (
               <p className={`text-sm ${settingsMessage.includes('success') ? 'text-green-400' : 'text-destructive'}`}>

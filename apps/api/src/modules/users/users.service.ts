@@ -31,6 +31,7 @@ export class UsersService {
       settings: user.settings[0] ? {
         discount: user.settings[0].discount,
         restDiscount: user.settings[0].restDiscount,
+        currencyId: user.settings[0].currencyId,
         currency: user.settings[0].currency,
         language: user.settings[0].language,
       } : null,
@@ -107,6 +108,7 @@ export class UsersService {
         subscription: { include: { plan: true } },
         creditBalance: true,
         status: true,
+        settings: true,
       },
       skip,
       take: limit + 1,
@@ -125,6 +127,7 @@ export class UsersService {
       roles: u.roles.map((ur) => ur.role.name),
       plan: u.subscription?.plan?.name || 'Free',
       credits: u.creditBalance?.available || 0,
+      discount: u.settings?.[0]?.discount || 0,
       createdAt: u.createdDate,
       lastAccess: u.lastAccess,
     }));

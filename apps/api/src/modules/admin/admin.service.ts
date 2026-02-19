@@ -270,6 +270,28 @@ export class AdminService {
     }));
   }
 
+  async updateUserDiscount(userId: number, discount: number) {
+    const bigUserId = BigInt(userId);
+    const user = await this.prisma.user.findUnique({ where: { userId: bigUserId } });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    const settings = await this.prisma.settingUser.findFirst({ where: { userId: bigUserId } });
+    if (settings) {
+      await this.prisma.settingUser.update({
+        where: { id: settings.id },
+        data: { discount },
+      });
+    } else {
+      await this.prisma.settingUser.create({
+        data: { userId: bigUserId, discount, restDiscount: false, currencyId: 1, language: 'en' },
+      });
+    }
+
+    return { success: true, discount };
+  }
+
   async getUserPriceLists(userId: number) {
     const bigUserId = BigInt(userId);
     const lists = await this.prisma.priceList.findMany({

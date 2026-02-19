@@ -1,24 +1,266 @@
-<svg width="600" height="450" xmlns="http://www.w3.org/2000/svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 450" width="600" height="450">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#111827"/>
-      <stop offset="100%" stop-color="#0a0a1a"/>
+    <!-- Background gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#111827"/>
+      <stop offset="100%" style="stop-color:#0a0a1a"/>
     </linearGradient>
-    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#00e88f" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#00e88f" stop-opacity="0.05"/>
+
+    <!-- Subtle radial glow behind converter -->
+    <radialGradient id="glowBg" cx="50%" cy="45%" r="35%">
+      <stop offset="0%" style="stop-color:#00e88f;stop-opacity:0.06"/>
+      <stop offset="100%" style="stop-color:#00e88f;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Main body metallic gradient (top-lit cylinder) -->
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5a6270"/>
+      <stop offset="15%" style="stop-color:#8a919c"/>
+      <stop offset="35%" style="stop-color:#6b7280"/>
+      <stop offset="60%" style="stop-color:#4b5563"/>
+      <stop offset="85%" style="stop-color:#374151"/>
+      <stop offset="100%" style="stop-color:#2a3040"/>
+    </linearGradient>
+
+    <!-- Cylinder side highlight -->
+    <linearGradient id="bodyHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0"/>
+      <stop offset="20%" style="stop-color:#ffffff;stop-opacity:0.08"/>
+      <stop offset="45%" style="stop-color:#ffffff;stop-opacity:0.18"/>
+      <stop offset="55%" style="stop-color:#ffffff;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0"/>
+    </linearGradient>
+
+    <!-- Heat shield gradient -->
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#9ca3af"/>
+      <stop offset="30%" style="stop-color:#6b7280"/>
+      <stop offset="70%" style="stop-color:#4b5563"/>
+      <stop offset="100%" style="stop-color:#374151"/>
+    </linearGradient>
+
+    <!-- Pipe gradient -->
+    <linearGradient id="pipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#6b7280"/>
+      <stop offset="30%" style="stop-color:#9ca3af"/>
+      <stop offset="50%" style="stop-color:#7a828e"/>
+      <stop offset="80%" style="stop-color:#4b5563"/>
+      <stop offset="100%" style="stop-color:#374151"/>
+    </linearGradient>
+
+    <!-- Pipe inner dark -->
+    <radialGradient id="pipeInner" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0a0a1a"/>
+      <stop offset="70%" style="stop-color:#1f2937"/>
+      <stop offset="100%" style="stop-color:#374151"/>
+    </radialGradient>
+
+    <!-- Green accent glow -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00e88f;stop-opacity:0.5"/>
+      <stop offset="100%" style="stop-color:#00e88f;stop-opacity:0"/>
+    </linearGradient>
+
+    <!-- Ellipse cap top gradient -->
+    <linearGradient id="capTopGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#8a919c"/>
+      <stop offset="100%" style="stop-color:#5a6270"/>
+    </linearGradient>
+
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+
+    <!-- Soft glow for accent lines -->
+    <filter id="greenGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle noise texture -->
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch" result="noise"/>
+      <feColorMatrix type="saturate" values="0" in="noise" result="grayNoise"/>
+      <feBlend in="SourceGraphic" in2="grayNoise" mode="overlay" result="blended"/>
+      <feComponentTransfer in="blended">
+        <feFuncA type="linear" slope="1"/>
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Flange rivet gradient -->
+    <radialGradient id="rivetGrad" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" style="stop-color:#b0b8c4"/>
+      <stop offset="100%" style="stop-color:#4b5563"/>
+    </radialGradient>
+
+    <!-- Bottom shadow ellipse -->
+    <radialGradient id="floorShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:0.35"/>
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Weld seam line gradient -->
+    <linearGradient id="weldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00e88f;stop-opacity:0"/>
+      <stop offset="30%" style="stop-color:#00e88f;stop-opacity:0.15"/>
+      <stop offset="70%" style="stop-color:#00e88f;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#00e88f;stop-opacity:0"/>
     </linearGradient>
   </defs>
-  <rect width="600" height="450" fill="url(#bg)"/>
-  <rect x="0" y="0" width="600" height="450" fill="url(#accent)"/>
-  <!-- Converter icon -->
-  <g transform="translate(300,180)" opacity="0.3">
-    <ellipse cx="0" cy="0" rx="60" ry="35" fill="none" stroke="#00e88f" stroke-width="2"/>
-    <line x1="-80" y1="0" x2="-60" y2="0" stroke="#374151" stroke-width="3"/>
-    <line x1="60" y1="0" x2="80" y2="0" stroke="#374151" stroke-width="3"/>
-    <rect x="-50" y="-25" width="100" height="50" rx="4" fill="none" stroke="#374151" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Background -->
+  <rect width="600" height="450" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern -->
+  <g opacity="0.03">
+    <line x1="0" y1="75" x2="600" y2="75" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="0" y1="150" x2="600" y2="150" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="0" y1="225" x2="600" y2="225" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="0" y1="300" x2="600" y2="300" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="0" y1="375" x2="600" y2="375" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="100" y1="0" x2="100" y2="450" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="200" y1="0" x2="200" y2="450" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="300" y1="0" x2="300" y2="450" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="400" y1="0" x2="400" y2="450" stroke="#ffffff" stroke-width="0.5"/>
+    <line x1="500" y1="0" x2="500" y2="450" stroke="#ffffff" stroke-width="0.5"/>
   </g>
-  <!-- Text -->
-  <text x="300" y="260" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#00e88f" opacity="0.5">CATALYSER</text>
-  <text x="300" y="285" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">No image available</text>
+
+  <!-- Background glow -->
+  <rect width="600" height="450" fill="url(#glowBg)"/>
+
+  <!-- Floor shadow -->
+  <ellipse cx="300" cy="310" rx="180" ry="25" fill="url(#floorShadow)"/>
+
+  <!-- ============ CONVERTER ASSEMBLY ============ -->
+  <g filter="url(#shadow)">
+
+    <!-- === LEFT INLET PIPE === -->
+    <!-- Pipe body -->
+    <g transform="translate(105, 180)">
+      <!-- Pipe cylinder -->
+      <rect x="0" y="8" width="75" height="36" rx="2" fill="url(#pipeGrad)"/>
+      <!-- Pipe highlight -->
+      <rect x="0" y="14" width="75" height="12" fill="white" opacity="0.06" rx="1"/>
+      <!-- Pipe opening left ellipse -->
+      <ellipse cx="2" cy="26" rx="8" ry="18" fill="url(#pipeGrad)" stroke="#2a3040" stroke-width="0.5"/>
+      <ellipse cx="2" cy="26" rx="5" ry="13" fill="url(#pipeInner)"/>
+
+      <!-- Left flange -->
+      <rect x="60" y="2" width="10" height="48" rx="2" fill="#6b7280" stroke="#4b5563" stroke-width="0.5"/>
+      <circle cx="65" cy="8" r="2.5" fill="url(#rivetGrad)"/>
+      <circle cx="65" cy="44" r="2.5" fill="url(#rivetGrad)"/>
+    </g>
+
+    <!-- === MAIN CATALYTIC CONVERTER BODY === -->
+    <g transform="translate(180, 130)">
+
+      <!-- Main canister body - 3D cylinder effect -->
+      <!-- Bottom darker area for depth -->
+      <rect x="0" y="20" width="240" height="120" rx="18" fill="#2a3040"/>
+      <!-- Main body fill -->
+      <rect x="0" y="15" width="240" height="118" rx="18" fill="url(#bodyGrad)"/>
+      <!-- Horizontal highlight for roundness -->
+      <rect x="5" y="40" width="230" height="40" rx="12" fill="url(#bodyHighlight)"/>
+
+      <!-- Heat shield texture lines -->
+      <g opacity="0.08">
+        <line x1="25" y1="35" x2="215" y2="35" stroke="#ffffff" stroke-width="0.5"/>
+        <line x1="20" y1="55" x2="220" y2="55" stroke="#ffffff" stroke-width="0.5"/>
+        <line x1="20" y1="75" x2="220" y2="75" stroke="#ffffff" stroke-width="0.5"/>
+        <line x1="20" y1="95" x2="220" y2="95" stroke="#ffffff" stroke-width="0.5"/>
+        <line x1="25" y1="115" x2="215" y2="115" stroke="#ffffff" stroke-width="0.5"/>
+      </g>
+
+      <!-- Weld seam along center -->
+      <line x1="10" y1="74" x2="230" y2="74" stroke="url(#weldGrad)" stroke-width="1.5"/>
+
+      <!-- Green accent line - top edge reflection -->
+      <path d="M30,18 Q120,10 210,18" stroke="#00e88f" stroke-width="0.8" fill="none" opacity="0.25" filter="url(#greenGlow)"/>
+
+      <!-- Left elliptical cap -->
+      <ellipse cx="8" cy="74" rx="12" ry="52" fill="url(#shieldGrad)" stroke="#2a3040" stroke-width="0.5"/>
+      <ellipse cx="6" cy="72" rx="6" ry="35" fill="#4b5563" opacity="0.5"/>
+
+      <!-- Right elliptical cap -->
+      <ellipse cx="232" cy="74" rx="12" ry="52" fill="url(#shieldGrad)" stroke="#2a3040" stroke-width="0.5"/>
+      <ellipse cx="234" cy="72" rx="6" ry="35" fill="#4b5563" opacity="0.5"/>
+
+      <!-- Stamped label area -->
+      <rect x="75" y="50" width="90" height="48" rx="4" fill="#374151" opacity="0.5" stroke="#4b5563" stroke-width="0.5"/>
+      <!-- Label lines (simulating stamped text) -->
+      <line x1="85" y1="62" x2="155" y2="62" stroke="#6b7280" stroke-width="1.2" opacity="0.5"/>
+      <line x1="90" y1="72" x2="150" y2="72" stroke="#6b7280" stroke-width="1" opacity="0.4"/>
+      <line x1="95" y1="82" x2="145" y2="82" stroke="#6b7280" stroke-width="0.8" opacity="0.3"/>
+
+      <!-- Oxygen sensor bung (top) -->
+      <g transform="translate(170, 12)">
+        <rect x="-5" y="-12" width="10" height="14" rx="3" fill="#6b7280" stroke="#4b5563" stroke-width="0.5"/>
+        <circle cx="0" cy="-14" r="5" fill="url(#rivetGrad)" stroke="#4b5563" stroke-width="0.5"/>
+        <circle cx="0" cy="-14" r="2" fill="#374151"/>
+      </g>
+
+      <!-- Mounting bracket left -->
+      <g opacity="0.7">
+        <path d="M35,130 L35,148 Q35,152 39,152 L55,152 Q59,152 59,148 L59,130" fill="none" stroke="#6b7280" stroke-width="2.5"/>
+        <circle cx="47" cy="155" r="4" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+      </g>
+
+      <!-- Mounting bracket right -->
+      <g opacity="0.7">
+        <path d="M180,130 L180,148 Q180,152 184,152 L200,152 Q204,152 204,148 L204,130" fill="none" stroke="#6b7280" stroke-width="2.5"/>
+        <circle cx="192" cy="155" r="4" fill="none" stroke="#6b7280" stroke-width="1.5"/>
+      </g>
+    </g>
+
+    <!-- === RIGHT OUTLET PIPE === -->
+    <g transform="translate(420, 180)">
+      <!-- Right flange -->
+      <rect x="0" y="2" width="10" height="48" rx="2" fill="#6b7280" stroke="#4b5563" stroke-width="0.5"/>
+      <circle cx="5" cy="8" r="2.5" fill="url(#rivetGrad)"/>
+      <circle cx="5" cy="44" r="2.5" fill="url(#rivetGrad)"/>
+
+      <!-- Pipe body -->
+      <rect x="8" y="8" width="75" height="36" rx="2" fill="url(#pipeGrad)"/>
+      <rect x="8" y="14" width="75" height="12" fill="white" opacity="0.06" rx="1"/>
+
+      <!-- Pipe opening right ellipse -->
+      <ellipse cx="81" cy="26" rx="8" ry="18" fill="url(#pipeGrad)" stroke="#2a3040" stroke-width="0.5"/>
+      <ellipse cx="81" cy="26" rx="5" ry="13" fill="url(#pipeInner)"/>
+    </g>
+
+  </g>
+
+  <!-- === AMBIENT GREEN ACCENT PARTICLES === -->
+  <g filter="url(#greenGlow)">
+    <circle cx="145" cy="160" r="1.2" fill="#00e88f" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="460" cy="175" r="1" fill="#00e88f" opacity="0.25">
+      <animate attributeName="opacity" values="0.25;0.08;0.25" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="135" r="1.5" fill="#00e88f" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.05;0.2" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="220" cy="300" r="0.8" fill="#00e88f" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.06;0.2" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="400" cy="290" r="1" fill="#00e88f" opacity="0.15">
+      <animate attributeName="opacity" values="0.15;0.04;0.15" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- ============ TEXT ============ -->
+
+  <!-- CATALYSER brand text -->
+  <text x="300" y="370" text-anchor="middle" font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="8" fill="#00e88f" opacity="0.4">CATALYSER</text>
+
+  <!-- No image available -->
+  <text x="300" y="395" text-anchor="middle" font-family="'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" letter-spacing="1.5" fill="#6b7280" opacity="0.7">No image available</text>
+
+  <!-- Thin separator line -->
+  <line x1="240" y1="350" x2="360" y2="350" stroke="#00e88f" stroke-width="0.5" opacity="0.2"/>
 </svg>

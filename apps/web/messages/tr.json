@@ -269,6 +269,7 @@
     "discount": "İndirim",
     "percentOff": "%{percent} indirim",
     "discountDescription": "Konvertör fiyat hesaplamalarına uygulanır",
+    "setByAdmin": "Yönetici tarafından belirlenir",
     "applyDiscountToRest": "İndirimi kalan değere uygula",
     "settingsUpdated": "Ayarlar başarıyla güncellendi",
     "settingsUpdateFailed": "Ayarlar güncellenemedi",

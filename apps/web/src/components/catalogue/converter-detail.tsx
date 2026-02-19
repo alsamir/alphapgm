@@ -62,10 +62,9 @@ export function ConverterDetail({ converterId }: Props) {
           const res = await api.getConverter(converterId, token);
           setConverter(res.data);
         } else {
-          // Fetch basic info without auth (no pricing data)
-          const res = await api.searchConverters({ query: String(converterId) });
-          const found = res.data?.data?.find((c: any) => c.id === converterId);
-          setConverter(found || null);
+          // Fetch basic preview info without auth (no pricing data)
+          const res = await api.getConverterPreview(converterId);
+          setConverter(res.data || null);
         }
       } catch (err: any) {
         setError(err.message || 'Failed to load converter');

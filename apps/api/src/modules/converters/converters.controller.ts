@@ -49,6 +49,27 @@ export class ConvertersController {
     return { success: true, data: brands };
   }
 
+
+  @Public()
+  @Get(':id/preview')
+  async preview(@Param('id', ParseIntPipe) id: number) {
+    const converter = await this.convertersService.findById(id);
+    return {
+      success: true,
+      data: {
+        id: converter.id,
+        name: converter.name,
+        nameModified: converter.nameModified,
+        urlPath: converter.urlPath,
+        brand: converter.brand,
+        weight: converter.weight,
+        imageUrl: converter.imageUrl || null,
+        brandImage: converter.brandImage,
+        keywords: converter.keywords,
+        createdDate: converter.createdDate,
+      },
+    };
+  }
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @Throttle({ short: { ttl: 60000, limit: 10 } })

@@ -269,6 +269,7 @@
     "discount": "Korting",
     "percentOff": "{percent}% korting",
     "discountDescription": "Toegepast op katalysatorprijsberekeningen",
+    "setByAdmin": "Ingesteld door beheerder",
     "applyDiscountToRest": "Korting toepassen op restwaarde",
     "settingsUpdated": "Instellingen succesvol bijgewerkt",
     "settingsUpdateFailed": "Instellingen bijwerken mislukt",

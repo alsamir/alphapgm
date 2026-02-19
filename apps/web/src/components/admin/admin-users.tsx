@@ -39,6 +39,7 @@ interface UserRecord {
   status: string;
   plan: string;
   credits: { available: number } | number;
+  discount?: number;
   createdAt?: string;
   updatedAt?: string;
   phone?: string;
@@ -196,13 +197,15 @@ function InlineStatusDropdown({
   );
 }
 
-function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: string | null; onToast: (msg: string, type: 'success' | 'error') => void }) {
+function UserDetailPanel({ user, token, onToast, onRefresh }: { user: UserRecord; token: string | null; onToast: (msg: string, type: 'success' | 'error') => void; onRefresh?: () => void }) {
   const [resetLoading, setResetLoading] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [creditHistory, setCreditHistory] = useState<any[] | null>(null);
   const [priceListsLoading, setPriceListsLoading] = useState(false);
   const [userPriceLists, setUserPriceLists] = useState<any[] | null>(null);
+  const [discount, setDiscount] = useState<number>((user as any).discount ?? 0);
+  const [discountSaving, setDiscountSaving] = useState(false);
 
   const handleResetPassword = async () => {
     if (!token) return;
@@ -235,6 +238,19 @@ function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: st
       onToast('Failed to load history', 'error');
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  const handleSaveDiscount = async () => {
+    if (!token) return;
+    setDiscountSaving(true);
+    try {
+      await api.updateUserDiscount(user.id, discount, token);
+      onToast(`Discount updated to ${discount}%`, 'success');
+    } catch (err: any) {
+      onToast(err.message || 'Failed to update discount', 'error');
+    } finally {
+      setDiscountSaving(false);
     }
   };
 
@@ -304,6 +320,29 @@ function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: st
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Credits Available</span>
                   <span className="font-semibold text-foreground">{formatCredits(user.credits)}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Discount %</span>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.5}
+                      value={discount}
+                      onChange={(e) => setDiscount(Number(e.target.value))}
+                      className="h-7 w-20 text-xs bg-background"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSaveDiscount}
+                      disabled={discountSaving}
+                      className="h-7 text-[10px] px-2"
+                    >
+                      {discountSaving ? '...' : 'Save'}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -808,7 +847,7 @@ export function AdminUsers() {
                           </Button>
                         </td>
                       </tr>
-                      {isExpanded && <UserDetailPanel user={user} token={token} onToast={showToast} />}
+                      {isExpanded && <UserDetailPanel user={user} token={token} onToast={showToast} onRefresh={fetchUsers} />}
                     </React.Fragment>
                   );
                 })

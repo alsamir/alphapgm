@@ -26,11 +26,11 @@ export class PricingService {
     const result: Record<string, any> = {};
     for (const metal of metals) {
       const key = metal.name?.toLowerCase() || '';
-      if (key.includes('plat')) {
+      if (key.includes('plat') || key === 'xpt') {
         result.platinum = { id: metal.id, name: 'Platinum', price: metal.price || 0, currency: metal.currency?.currencyCodes || 'USD', date: metal.date };
-      } else if (key.includes('pallad')) {
+      } else if (key.includes('pallad') || key === 'xpd') {
         result.palladium = { id: metal.id, name: 'Palladium', price: metal.price || 0, currency: metal.currency?.currencyCodes || 'USD', date: metal.date };
-      } else if (key.includes('rhod')) {
+      } else if (key.includes('rhod') || key === 'xrh') {
         result.rhodium = { id: metal.id, name: 'Rhodium', price: metal.price || 0, currency: metal.currency?.currencyCodes || 'USD', date: metal.date };
       }
     }
