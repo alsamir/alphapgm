@@ -4,192 +4,203 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Shield, Menu, X, FileText } from 'lucide-react';
+import { User, LogOut, Shield, Menu, X, FileText, LayoutDashboard } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { useTranslations } from 'next-intl';
 
-function AuthButtons() {
-  const { user, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
-  const t = useTranslations('header');
-
-  if (isLoading) {
-    return <div className="h-9 w-24 bg-border/30 rounded-md animate-pulse" />;
-  }
-
-  if (isAuthenticated) {
-    return (
-      <>
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard">
-            <User className="h-4 w-4 mr-1" />
-            {user?.firstName || user?.username}
-          </Link>
-        </Button>
-        {isAdmin && (
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin">
-              <Shield className="h-4 w-4 mr-1" />
-              {t('admin')}
-            </Link>
-          </Button>
-        )}
-        <Button variant="ghost" size="sm" onClick={logout}>
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/login">{t('signIn')}</Link>
-      </Button>
-      <Button size="sm" asChild>
-        <Link href="/register">{t('getStarted')}</Link>
-      </Button>
-    </>
-  );
-}
-
-function MobileAuthButtons({ onClose }: { onClose: () => void }) {
-  const { isAuthenticated, isAdmin, isLoading, logout } = useAuth();
-  const t = useTranslations('header');
-
-  if (isLoading) {
-    return <div className="h-9 w-full bg-border/30 rounded-md animate-pulse" />;
-  }
-
-  if (isAuthenticated) {
-    return (
-      <>
-        <Link href="/dashboard" className="text-sm py-2" onClick={onClose}>{t('dashboard')}</Link>
-        {isAdmin && <Link href="/admin" className="text-sm py-2" onClick={onClose}>{t('admin')}</Link>}
-        <Button variant="ghost" size="sm" onClick={() => { logout(); onClose(); }}>{t('signOut')}</Button>
-      </>
-    );
-  }
-
-  return (
-    <div className="flex gap-2 pt-2">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href="/login" onClick={onClose}>{t('signIn')}</Link>
-      </Button>
-      <Button size="sm" asChild>
-        <Link href="/register" onClick={onClose}>{t('getStarted')}</Link>
-      </Button>
-    </div>
-  );
-}
-
-function PriceListNavLink() {
-  const { token, isAuthenticated, isLoading } = useAuth();
-  const [itemCount, setItemCount] = useState(0);
+function PriceListBadge() {
+  const { token, isAuthenticated } = useAuth();
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated || !token) return;
-    const fetchCount = async () => {
-      try {
-        const res = await api.getPriceLists(token);
-        const lists = res.data || [];
-        const total = lists.reduce((sum: number, l: any) => sum + (l.itemCount || 0), 0);
-        setItemCount(total);
-      } catch {
-        // silent
-      }
-    };
-    fetchCount();
+    api.getPriceLists(token).then((res) => {
+      const total = (res.data || []).reduce((sum: number, l: any) => sum + (l.itemCount || 0), 0);
+      setCount(total);
+    }).catch(() => {});
   }, [token, isAuthenticated]);
 
-  if (isLoading || !isAuthenticated) return null;
-
+  if (!isAuthenticated || count === 0) return null;
   return (
-    <Button variant="ghost" size="sm" asChild className="relative">
-      <Link href="/dashboard?tab=pricelists">
-        <FileText className="h-4 w-4" />
-        {itemCount > 0 && (
-          <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center px-1">
-            {itemCount}
-          </span>
-        )}
-      </Link>
-    </Button>
+    <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center px-1">
+      {count}
+    </span>
   );
 }
 
 export function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, isAuthenticated, isAdmin, isLoading, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const t = useTranslations('header');
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex h-14 items-center justify-between px-4 gap-2">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src="/logo.png"
-            alt="Catalyser"
-            width={46}
-            height={25}
-            className="h-6 w-auto"
-            priority
-          />
-          <span className="text-xl font-bold text-foreground tracking-tight">
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+          <Image src="/logo.png" alt="Catalyser" width={46} height={25} className="h-5 w-auto" priority />
+          <span className="text-lg font-bold text-foreground tracking-tight hidden sm:inline">
             Cataly<span className="text-primary">ser</span>
           </span>
         </Link>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/catalogue" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            {t('catalogue')}
-          </Link>
-          <Link href="/about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            {t('about')}
-          </Link>
-        </nav>
+        {/* Desktop Nav — all grouped together on the right */}
+        <div className="hidden md:flex items-center gap-1">
+          {/* Main nav links */}
+          <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+            <Link href="/catalogue">{t('catalogue')}</Link>
+          </Button>
 
-        {/* Language Switcher (Desktop) */}
-        <div className="hidden md:flex items-center">
+          {/* Authenticated items */}
+          {!isLoading && isAuthenticated && (
+            <>
+              <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                <Link href="/dashboard">
+                  <LayoutDashboard className="h-3.5 w-3.5 mr-1.5" />
+                  {t('dashboard')}
+                </Link>
+              </Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground relative" asChild>
+                <Link href="/dashboard?tab=pricelists">
+                  <FileText className="h-3.5 w-3.5 mr-1.5" />
+                  {t('priceLists')}
+                  <PriceListBadge />
+                </Link>
+              </Button>
+              {isAdmin && (
+                <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                  <Link href="/admin">
+                    <Shield className="h-3.5 w-3.5 mr-1.5" />
+                    {t('admin')}
+                  </Link>
+                </Button>
+              )}
+            </>
+          )}
+
+          {/* Separator */}
+          <div className="h-5 w-px bg-border mx-1" />
+
+          {/* Language */}
           <LanguageSwitcher />
+
+          {/* Auth */}
+          {isLoading ? (
+            <div className="h-8 w-20 bg-border/30 rounded-md animate-pulse" />
+          ) : isAuthenticated ? (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+                <Link href="/dashboard?tab=profile">
+                  <User className="h-3.5 w-3.5 mr-1.5" />
+                  <span className="max-w-[80px] truncate">{user?.firstName || user?.username}</span>
+                </Link>
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={logout}>
+                <LogOut className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login">{t('signIn')}</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/register">{t('getStarted')}</Link>
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-3">
-          <PriceListNavLink />
-          <AuthButtons />
+        {/* Mobile: language + hamburger */}
+        <div className="flex md:hidden items-center gap-1">
+          <LanguageSwitcher />
+          <button className="p-2" onClick={() => setMobileOpen(!mobileOpen)}>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-
-        {/* Mobile menu toggle */}
-        <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
       </div>
 
       {/* Mobile Menu */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {mobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-border bg-background"
+            className="md:hidden border-t border-border bg-background overflow-hidden"
           >
-            <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
-              <Link href="/catalogue" className="text-sm py-2" onClick={() => setMobileMenuOpen(false)}>{t('catalogue')}</Link>
-              <Link href="/about" className="text-sm py-2" onClick={() => setMobileMenuOpen(false)}>{t('about')}</Link>
-              <Link href="/dashboard?tab=pricelists" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                <FileText className="h-4 w-4" />
-                {t('priceLists')}
+            <nav className="container mx-auto px-4 py-3 flex flex-col">
+              <Link
+                href="/catalogue"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-secondary transition-colors"
+                onClick={() => setMobileOpen(false)}
+              >
+                {t('catalogue')}
               </Link>
-              <div className="py-2">
-                <LanguageSwitcher />
-              </div>
-              <MobileAuthButtons onClose={() => setMobileMenuOpen(false)} />
-            </div>
+
+              {!isLoading && isAuthenticated && (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-secondary transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                    {t('dashboard')}
+                  </Link>
+                  <Link
+                    href="/dashboard?tab=pricelists"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-secondary transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    {t('priceLists')}
+                  </Link>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-secondary transition-colors"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <Shield className="h-4 w-4 text-muted-foreground" />
+                      {t('admin')}
+                    </Link>
+                  )}
+
+                  <div className="border-t border-border my-2" />
+
+                  <Link
+                    href="/dashboard?tab=profile"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-secondary transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    {user?.firstName || user?.username || user?.email}
+                  </Link>
+                  <button
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors text-left"
+                    onClick={() => { logout(); setMobileOpen(false); }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {t('signOut')}
+                  </button>
+                </>
+              )}
+
+              {!isLoading && !isAuthenticated && (
+                <div className="flex gap-2 px-3 pt-2">
+                  <Button variant="outline" size="sm" className="flex-1" asChild>
+                    <Link href="/login" onClick={() => setMobileOpen(false)}>{t('signIn')}</Link>
+                  </Button>
+                  <Button size="sm" className="flex-1" asChild>
+                    <Link href="/register" onClick={() => setMobileOpen(false)}>{t('getStarted')}</Link>
+                  </Button>
+                </div>
+              )}
+            </nav>
           </motion.div>
         )}
       </AnimatePresence>

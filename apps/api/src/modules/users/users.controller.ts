@@ -22,10 +22,10 @@ export class UsersController {
   @Put('profile')
   async updateProfile(
     @CurrentUser('userId') userId: number,
-    @Body() body: { name?: string; firstName?: string; lastName?: string; phone?: string },
+    @Body() body: { name?: string; firstName?: string; lastName?: string; phone?: string; password?: string },
   ) {
     const result = await this.usersService.updateProfile(BigInt(userId), body);
-    return { success: true, data: result };
+    return { success: true, data: { id: Number(result.userId) } };
   }
 
   @Put('settings')

@@ -50,9 +50,9 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
           className="group"
         >
           <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
+            <CardContent className="p-3 sm:p-4 flex items-center gap-3">
               {/* Thumbnail */}
-              <div className="h-16 w-16 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
+              <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
                 <img
                   src={thumbnailSrc}
                   alt={converter.name}
@@ -64,32 +64,29 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
 
               {/* Name & Brand */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium truncate group-hover:text-primary transition-colors">
+                <h3 className="font-medium text-sm sm:text-base truncate group-hover:text-primary transition-colors">
                   {converter.name}
                 </h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-1.5 mt-0.5">
                   {brandLogoSrc && (
                     <img
                       src={brandLogoSrc}
                       alt={converter.brand}
-                      className="h-4 w-4 object-contain"
+                      className="h-3.5 w-3.5 object-contain"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                    {converter.brand}
-                  </Badge>
+                  <span className="text-xs text-muted-foreground">{converter.brand}</span>
                 </div>
               </div>
 
               {/* Weight */}
               {converter.weight && converter.weight !== '0' && (
-                <span className="text-sm text-muted-foreground flex-shrink-0">
+                <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block">
                   {converter.weight} kg
                 </span>
               )}
 
-              {/* View arrow */}
               <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
             </CardContent>
           </Card>
@@ -107,7 +104,7 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
       >
         <Card className="h-full bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer overflow-hidden">
           {/* Image area */}
-          <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
+          <div className="aspect-square sm:aspect-[4/3] bg-secondary relative overflow-hidden">
             <img
               src={thumbnailSrc}
               alt={converter.name}
@@ -115,37 +112,31 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
               loading="lazy"
               onError={handleImgError}
             />
-            {/* Brand badge */}
-            <div className="absolute top-2 left-2 flex items-center gap-1.5">
-              {brandLogoSrc && (
-                <div className="h-6 w-6 rounded bg-background/80 backdrop-blur-sm p-0.5 border border-border/50">
-                  <img
-                    src={brandLogoSrc}
-                    alt={converter.brand}
-                    className="h-full w-full object-contain"
-                    onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
-                  />
-                </div>
-              )}
-              <Badge variant="secondary">
-                {converter.brand}
-              </Badge>
-            </div>
+            {/* Brand badge - smaller on mobile */}
+            {brandLogoSrc && (
+              <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 h-5 w-5 sm:h-6 sm:w-6 rounded bg-background/80 backdrop-blur-sm p-0.5 border border-border/50">
+                <img
+                  src={brandLogoSrc}
+                  alt={converter.brand}
+                  className="h-full w-full object-contain"
+                  onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Card body */}
-          <CardContent className="p-4">
-            <h3 className="font-medium mb-1 truncate group-hover:text-primary transition-colors">
+          {/* Card body - compact on mobile */}
+          <CardContent className="p-2.5 sm:p-4">
+            <h3 className="font-medium text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2 group-hover:text-primary transition-colors leading-tight">
               {converter.name}
             </h3>
-            {converter.weight && converter.weight !== '0' && (
-              <p className="text-sm text-muted-foreground mb-2">
-                {t('weight')}: {converter.weight} kg
-              </p>
-            )}
-            <div className="flex items-center gap-1 text-muted-foreground text-xs">
-              <span>{t('details')}</span>
-              <ArrowRight className="h-3 w-3" />
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] sm:text-xs text-muted-foreground">{converter.brand}</span>
+              {converter.weight && converter.weight !== '0' && (
+                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                  {converter.weight} kg
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>

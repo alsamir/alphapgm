@@ -136,8 +136,6 @@ export function CatalogueContent() {
 
   // Build page numbers for pagination
   const pageNumbers = useMemo(() => {
-    // We don't know total pages from the API (anti-scraping), but we know current page and hasMore
-    // Show current page and surrounding pages
     const pages: (number | 'ellipsis')[] = [];
     const maxPage = hasMore ? page + 1 : page;
 
@@ -163,156 +161,147 @@ export function CatalogueContent() {
   }, [page, hasMore]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
-      {/* Sidebar Filters */}
-      <aside className="lg:w-64 flex-shrink-0">
-        <div className="sticky top-20 space-y-6">
-          <BrandFilter selectedBrand={brand} onSelect={handleBrandSelect} />
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className="flex-1">
-        {/* Search Bar */}
-        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+    <div className="space-y-4">
+      {/* Search + Brand filter row */}
+      <div className="flex flex-col sm:flex-row gap-2">
+        <form onSubmit={handleSearch} className="flex gap-2 flex-1">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-card"
+              className="pl-9 h-9 bg-card"
             />
           </div>
-          <Button type="submit">{t('search')}</Button>
+          <Button type="submit" size="sm" className="h-9 px-4">
+            {t('search')}
+          </Button>
         </form>
+        <BrandFilter selectedBrand={brand} onSelect={handleBrandSelect} />
+      </div>
 
-        {/* Toolbar: sort, result count, view toggle */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-sm text-muted-foreground">
-              {loading ? t('loading') : `${t('showing')} ${converters.length} ${t('results')}`}
-              {brand && (
-                <span>
-                  {' '}{t('in')} <span className="text-foreground font-medium">{brand}</span>
-                </span>
-              )}
-            </p>
-          </div>
+      {/* Toolbar: sort, result count, view toggle */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs sm:text-sm text-muted-foreground truncate">
+          {loading ? t('loading') : `${converters.length} ${t('results')}`}
+          {brand && (
+            <span className="hidden sm:inline">
+              {' '}{t('in')} <span className="text-foreground font-medium">{brand}</span>
+            </span>
+          )}
+        </p>
 
-          <div className="flex items-center gap-2">
-            {/* Sort dropdown */}
-            <div className="flex items-center gap-1.5">
-              <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-              <Select value={sort} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-[160px] h-8 text-xs bg-card">
-                  <SelectValue placeholder="Sort by..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTION_KEYS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {t(option.key)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {/* Sort dropdown */}
+          <Select value={sort} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-[120px] sm:w-[150px] h-8 text-xs bg-card">
+              <ArrowUpDown className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTION_KEYS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {t(option.key)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
-            {/* View mode */}
-            <div className="flex gap-1">
-              <Button
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
+          {/* View mode - hide on small mobile */}
+          <div className="hidden sm:flex gap-0.5">
+            <Button
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setViewMode('grid')}
+            >
+              <Grid3X3 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
         </div>
-
-        {/* Results */}
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-64 rounded-xl bg-card animate-pulse" />
-            ))}
-          </div>
-        ) : converters.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">{t('noResults')}</p>
-            <p className="text-muted-foreground text-sm mt-2">
-              {t('tryDifferent')}
-            </p>
-          </div>
-        ) : (
-          <div
-            className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'
-                : 'space-y-3'
-            }
-          >
-            {converters.map((converter) => (
-              <ConverterCard key={converter.id} converter={converter} viewMode={viewMode} />
-            ))}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {!loading && converters.length > 0 && (
-          <div className="flex items-center justify-center gap-1 mt-8">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => handlePageChange(page - 1)}
-              className="h-8"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              {t('prev')}
-            </Button>
-
-            {pageNumbers.map((p, idx) =>
-              p === 'ellipsis' ? (
-                <span key={`ellipsis-${idx}`} className="px-2 text-muted-foreground text-sm">
-                  ...
-                </span>
-              ) : (
-                <Button
-                  key={p}
-                  variant={p === page ? 'default' : 'outline'}
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => handlePageChange(p)}
-                >
-                  {p}
-                </Button>
-              ),
-            )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={!hasMore}
-              onClick={() => handlePageChange(page + 1)}
-              className="h-8"
-            >
-              {t('next')}
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Results */}
+      {loading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="aspect-[3/4] rounded-xl bg-card animate-pulse" />
+          ))}
+        </div>
+      ) : converters.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-muted-foreground text-lg">{t('noResults')}</p>
+          <p className="text-muted-foreground text-sm mt-2">
+            {t('tryDifferent')}
+          </p>
+        </div>
+      ) : (
+        <div
+          className={
+            viewMode === 'grid'
+              ? 'grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4'
+              : 'space-y-2'
+          }
+        >
+          {converters.map((converter) => (
+            <ConverterCard key={converter.id} converter={converter} viewMode={viewMode} />
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loading && converters.length > 0 && (
+        <div className="flex items-center justify-center gap-1 pt-4 pb-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => handlePageChange(page - 1)}
+            className="h-8 px-2 sm:px-3"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1">{t('prev')}</span>
+          </Button>
+
+          {pageNumbers.map((p, idx) =>
+            p === 'ellipsis' ? (
+              <span key={`ellipsis-${idx}`} className="px-1 text-muted-foreground text-sm">
+                ...
+              </span>
+            ) : (
+              <Button
+                key={p}
+                variant={p === page ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 w-8 p-0 text-xs"
+                onClick={() => handlePageChange(p)}
+              >
+                {p}
+              </Button>
+            ),
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!hasMore}
+            onClick={() => handlePageChange(page + 1)}
+            className="h-8 px-2 sm:px-3"
+          >
+            <span className="hidden sm:inline mr-1">{t('next')}</span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

@@ -204,9 +204,9 @@ export function ConverterDetail({ converterId }: Props) {
         {t('backToCatalogue')}
       </Link>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
         {/* Image Section */}
-        <div className="aspect-[4/3] rounded-xl bg-card border border-border overflow-hidden relative">
+        <div className="aspect-square sm:aspect-[4/3] rounded-xl bg-card border border-border overflow-hidden relative">
           <img
             src={`https://apg.fra1.cdn.digitaloceanspaces.com/images/${encodeURIComponent(converter.name.trim().split(' / ')[0].trim())}.png`}
             alt={converter.name}
@@ -227,12 +227,12 @@ export function ConverterDetail({ converterId }: Props) {
         </div>
 
         {/* Info Section */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div>
             <Badge variant="secondary" className="mb-2">
               {converter.brand}
             </Badge>
-            <h1 className="text-3xl font-bold">{converter.name}</h1>
+            <h1 className="text-xl sm:text-3xl font-bold break-words">{converter.name}</h1>
             {converter.nameModified && converter.nameModified !== converter.name && (
               <p className="text-muted-foreground mt-1">{converter.nameModified}</p>
             )}
@@ -409,7 +409,7 @@ export function ConverterDetail({ converterId }: Props) {
       </div>
 
       {/* Related Converters Section */}
-      <Separator className="my-10" />
+      <Separator className="my-6 sm:my-10" />
 
       <div>
         <h2 className="text-xl font-semibold mb-4">
@@ -422,9 +422,9 @@ export function ConverterDetail({ converterId }: Props) {
         </h2>
 
         {relatedLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-xl" />
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
             ))}
           </div>
         ) : relatedConverters.length === 0 ? (
@@ -432,12 +432,11 @@ export function ConverterDetail({ converterId }: Props) {
             {t('noRelated')}
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {relatedConverters.map((related) => (
               <Link key={related.id} href={`/converter/${related.id}`}>
                 <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer h-full group overflow-hidden">
-                  {/* Thumbnail image */}
-                  <div className="aspect-[4/3] bg-secondary/30 overflow-hidden relative">
+                  <div className="aspect-square sm:aspect-[4/3] bg-secondary/30 overflow-hidden relative">
                     <img
                       src={`https://apg.fra1.cdn.digitaloceanspaces.com/images/${encodeURIComponent(related.name.trim().split(' / ')[0].trim())}.png`}
                       alt={related.name}
@@ -445,23 +444,17 @@ export function ConverterDetail({ converterId }: Props) {
                       onError={(e) => { (e.target as HTMLImageElement).src = '/converter-placeholder.svg'; }}
                     />
                   </div>
-                  <CardContent className="p-3">
-                    <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
+                  <CardContent className="p-2 sm:p-3">
+                    <h3 className="font-medium text-xs sm:text-sm line-clamp-2 group-hover:text-primary transition-colors leading-tight">
                       {related.name}
                     </h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <Badge variant="secondary" className="text-[10px]">
-                        {related.brand}
-                      </Badge>
+                    <div className="flex items-center justify-between mt-1 sm:mt-2">
+                      <span className="text-[10px] sm:text-xs text-muted-foreground">{related.brand}</span>
                       {related.weight && related.weight !== '0' && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] text-muted-foreground hidden sm:inline">
                           {related.weight} kg
                         </span>
                       )}
-                    </div>
-                    <div className="flex items-center gap-1 text-primary text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span>{t('viewDetails')}</span>
-                      <ArrowRight className="h-3 w-3" />
                     </div>
                   </CardContent>
                 </Card>

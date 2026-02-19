@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -49,7 +50,7 @@ export class UsersService {
     };
   }
 
-  async updateProfile(userId: bigint, data: { name?: string; firstName?: string; lastName?: string; phone?: string }) {
+  async updateProfile(userId: bigint, data: { name?: string; firstName?: string; lastName?: string; phone?: string; password?: string }) {
     const updateData: any = {};
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.firstName !== undefined) updateData.firstName = data.firstName;
@@ -60,6 +61,10 @@ export class UsersService {
       updateData.name = fullName || data.name || null;
     } else if (data.name !== undefined) {
       updateData.name = data.name;
+    }
+    // Handle password change
+    if (data.password) {
+      updateData.password = await bcrypt.hash(data.password, 12);
     }
 
     return this.prisma.user.update({
