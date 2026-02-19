@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, ParseIntPipe, Res, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImagesService } from './images.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -10,6 +11,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Images')
+@SkipThrottle()
 @Controller('images')
 export class ImagesController {
   constructor(private imagesService: ImagesService) {}

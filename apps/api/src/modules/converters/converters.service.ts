@@ -83,9 +83,18 @@ export class ConvertersService {
       orderBy: { brand: 'asc' },
     });
 
+    // Get one brandImage per brand
+    const brandImages = await this.prisma.allData.findMany({
+      where: { brandImage: { not: null } },
+      distinct: ['brand'],
+      select: { brand: true, brandImage: true },
+    });
+    const imageMap = new Map(brandImages.map((b) => [b.brand, b.brandImage]));
+
     const result = brands.map((b) => ({
       name: b.brand,
       count: b._count.id,
+      brandImage: imageMap.get(b.brand) || null,
     }));
 
     // Cache for 1 hour

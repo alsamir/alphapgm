@@ -20,7 +20,8 @@
     "getStarted": "Loslegen",
     "dashboard": "Dashboard",
     "admin": "Admin",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "priceLists": "Preislisten"
   },
   "hero": {
     "badge": "Edelmetallpreise in Echtzeit",
@@ -174,7 +175,9 @@
     "signInToView": "Anmelden um Bild zu sehen",
     "notFound": "Katalysator nicht gefunden",
     "addToPriceList": "Zur Preisliste hinzufügen",
-    "addedToPriceList": "Zur Preisliste hinzugefügt"
+    "addedToPriceList": "Zur Preisliste hinzugefügt",
+    "basedOnCurrentPrices": "Basierend auf aktuellen Metallpreisen",
+    "addMore": "Mehr hinzufügen"
   },
   "footer": {
     "description": "Professionelle Katalysator-Bewertungsplattform mit Echtzeit-Marktdaten.",
@@ -329,6 +332,13 @@
     "creditHistory": "Credit-Verlauf",
     "userHistory": "Benutzerverlauf",
     "noSearchHistory": "Kein Suchverlauf",
-    "noCreditHistory": "Kein Credit-Verlauf"
+    "noCreditHistory": "Kein Credit-Verlauf",
+    "analytics": "Analytik",
+    "topConverters": "Meistgesuchte Katalysatoren",
+    "searchVolume": "Suchvolumen",
+    "activeUsers": "Aktivste Benutzer",
+    "views": "Aufrufe",
+    "searches": "Suchen",
+    "creditsUsed": "Credits verbraucht"
   }
 }

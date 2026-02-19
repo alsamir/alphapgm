@@ -23,6 +23,7 @@ import {
   KeyRound,
   Copy,
   History,
+  FileText,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -200,6 +201,8 @@ function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: st
   const [tempPassword, setTempPassword] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [creditHistory, setCreditHistory] = useState<any[] | null>(null);
+  const [priceListsLoading, setPriceListsLoading] = useState(false);
+  const [userPriceLists, setUserPriceLists] = useState<any[] | null>(null);
 
   const handleResetPassword = async () => {
     if (!token) return;
@@ -232,6 +235,19 @@ function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: st
       onToast('Failed to load history', 'error');
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  const handleLoadPriceLists = async () => {
+    if (!token || userPriceLists) return;
+    setPriceListsLoading(true);
+    try {
+      const res = await api.getAdminUserPriceLists(user.id, token);
+      setUserPriceLists(res.data || []);
+    } catch (err: any) {
+      onToast('Failed to load price lists', 'error');
+    } finally {
+      setPriceListsLoading(false);
     }
   };
 
@@ -362,6 +378,16 @@ function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: st
               <History className="h-3.5 w-3.5 mr-1.5" />
               {historyLoading ? 'Loading...' : creditHistory ? 'History Loaded' : 'View Credit History'}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLoadPriceLists}
+              disabled={priceListsLoading}
+              className="h-8 text-xs"
+            >
+              <FileText className="h-3.5 w-3.5 mr-1.5" />
+              {priceListsLoading ? 'Loading...' : userPriceLists ? 'Price Lists Loaded' : 'View Price Lists'}
+            </Button>
           </div>
 
           {/* Credit History Table */}
@@ -405,6 +431,41 @@ function UserDetailPanel({ user, token, onToast }: { user: UserRecord; token: st
           )}
           {creditHistory && creditHistory.length === 0 && (
             <p className="mt-3 text-xs text-muted-foreground">No credit history for this user.</p>
+          )}
+          {userPriceLists && userPriceLists.length > 0 && (
+            <div className="mt-4 pt-3 border-t border-border/50">
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                Price Lists
+              </h4>
+              {userPriceLists.map((list: any) => (
+                <div key={list.id} className="mb-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">{list.name}</span>
+                    <Badge variant="outline" className="text-[10px]">{list.itemCount} items</Badge>
+                  </div>
+                  {list.items?.length > 0 && (
+                    <div className="max-h-32 overflow-y-auto">
+                      <table className="w-full text-xs">
+                        <tbody>
+                          {list.items.map((item: any) => (
+                            <tr key={item.id} className="border-b border-border/30">
+                              <td className="py-1">{item.converterName}</td>
+                              <td className="py-1 text-muted-foreground">{item.converterBrand}</td>
+                              <td className="py-1 text-right font-mono">x{item.quantity}</td>
+                              <td className="py-1 text-right font-mono">${(item.totalPrice || 0).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {userPriceLists && userPriceLists.length === 0 && (
+            <p className="mt-3 text-xs text-muted-foreground">No price lists for this user.</p>
           )}
         </div>
       </td>

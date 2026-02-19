@@ -20,7 +20,8 @@
     "getStarted": "ابدأ الآن",
     "dashboard": "لوحة التحكم",
     "admin": "الإدارة",
-    "signOut": "تسجيل الخروج"
+    "signOut": "تسجيل الخروج",
+    "priceLists": "قوائم الأسعار"
   },
   "hero": {
     "badge": "أسعار المعادن الثمينة المباشرة",
@@ -174,7 +175,9 @@
     "signInToView": "سجل الدخول لعرض الصورة",
     "notFound": "المحول غير موجود",
     "addToPriceList": "أضف إلى قائمة الأسعار",
-    "addedToPriceList": "تمت الإضافة إلى قائمة الأسعار"
+    "addedToPriceList": "تمت الإضافة إلى قائمة الأسعار",
+    "basedOnCurrentPrices": "بناءً على أسعار المعادن الحالية",
+    "addMore": "أضف المزيد"
   },
   "footer": {
     "description": "منصة احترافية لتسعير المحولات الحفازة مع بيانات السوق المباشرة.",
@@ -329,6 +332,13 @@
     "creditHistory": "سجل الأرصدة",
     "userHistory": "سجل المستخدم",
     "noSearchHistory": "لا يوجد سجل بحث",
-    "noCreditHistory": "لا يوجد سجل أرصدة"
+    "noCreditHistory": "لا يوجد سجل أرصدة",
+    "analytics": "التحليلات",
+    "topConverters": "أكثر المحولات مشاهدة",
+    "searchVolume": "حجم البحث",
+    "activeUsers": "المستخدمون الأكثر نشاطاً",
+    "views": "مشاهدات",
+    "searches": "عمليات بحث",
+    "creditsUsed": "رصيد مستخدم"
   }
 }

@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, Shield, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { User, LogOut, Shield, Menu, X, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { api } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { useTranslations } from 'next-intl';
@@ -84,6 +85,41 @@ function MobileAuthButtons({ onClose }: { onClose: () => void }) {
   );
 }
 
+function PriceListNavLink() {
+  const { token, isAuthenticated, isLoading } = useAuth();
+  const [itemCount, setItemCount] = useState(0);
+
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+    const fetchCount = async () => {
+      try {
+        const res = await api.getPriceLists(token);
+        const lists = res.data || [];
+        const total = lists.reduce((sum: number, l: any) => sum + (l.itemCount || 0), 0);
+        setItemCount(total);
+      } catch {
+        // silent
+      }
+    };
+    fetchCount();
+  }, [token, isAuthenticated]);
+
+  if (isLoading || !isAuthenticated) return null;
+
+  return (
+    <Button variant="ghost" size="sm" asChild className="relative">
+      <Link href="/dashboard?tab=pricelists">
+        <FileText className="h-4 w-4" />
+        {itemCount > 0 && (
+          <span className="absolute -top-1 -right-1 h-4 min-w-[16px] rounded-full bg-primary text-[10px] font-bold text-primary-foreground flex items-center justify-center px-1">
+            {itemCount}
+          </span>
+        )}
+      </Link>
+    </Button>
+  );
+}
+
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const t = useTranslations('header');
@@ -123,6 +159,7 @@ export function Header() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-3">
+          <PriceListNavLink />
           <AuthButtons />
         </div>
 
@@ -144,6 +181,10 @@ export function Header() {
             <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
               <Link href="/catalogue" className="text-sm py-2" onClick={() => setMobileMenuOpen(false)}>{t('catalogue')}</Link>
               <Link href="/about" className="text-sm py-2" onClick={() => setMobileMenuOpen(false)}>{t('about')}</Link>
+              <Link href="/dashboard?tab=pricelists" className="text-sm py-2 flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                <FileText className="h-4 w-4" />
+                {t('priceLists')}
+              </Link>
               <div className="py-2">
                 <LanguageSwitcher />
               </div>

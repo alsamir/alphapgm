@@ -20,7 +20,8 @@
     "getStarted": "Comenzar",
     "dashboard": "Panel",
     "admin": "Admin",
-    "signOut": "Cerrar sesión"
+    "signOut": "Cerrar sesión",
+    "priceLists": "Listas de precios"
   },
   "hero": {
     "badge": "Precios de metales preciosos en vivo",
@@ -174,7 +175,9 @@
     "signInToView": "Inicia sesión para ver la imagen",
     "notFound": "Catalizador no encontrado",
     "addToPriceList": "Añadir a lista de precios",
-    "addedToPriceList": "Añadido a la lista de precios"
+    "addedToPriceList": "Añadido a la lista de precios",
+    "basedOnCurrentPrices": "Basado en precios actuales de metales",
+    "addMore": "Agregar más"
   },
   "footer": {
     "description": "Plataforma profesional de valoración de catalizadores con datos de mercado en tiempo real.",
@@ -329,6 +332,13 @@
     "creditHistory": "Historial de créditos",
     "userHistory": "Historial del usuario",
     "noSearchHistory": "Sin historial de búsqueda",
-    "noCreditHistory": "Sin historial de créditos"
+    "noCreditHistory": "Sin historial de créditos",
+    "analytics": "Analítica",
+    "topConverters": "Convertidores más vistos",
+    "searchVolume": "Volumen de búsqueda",
+    "activeUsers": "Usuarios más activos",
+    "views": "vistas",
+    "searches": "búsquedas",
+    "creditsUsed": "créditos usados"
   }
 }

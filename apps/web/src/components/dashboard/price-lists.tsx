@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Plus,
+  Minus,
   Trash2,
   FileText,
   Download,
@@ -126,6 +127,17 @@ export function PriceLists() {
     }
   };
 
+  const handleUpdateQuantity = async (itemId: number, quantity: number) => {
+    if (!token || !selectedList || quantity < 1) return;
+    try {
+      await api.updatePriceListItemQuantity(selectedList.id, itemId, quantity, token);
+      handleSelectList(selectedList.id);
+      fetchLists();
+    } catch (err: any) {
+      setMessage(err.message || 'Failed to update quantity');
+    }
+  };
+
   const handleRemoveItem = async (itemId: number) => {
     if (!token || !selectedList) return;
     try {
@@ -145,7 +157,7 @@ export function PriceLists() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `pricelist-${selectedList.id}.txt`;
+      a.download = `pricelist-${selectedList.id}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -187,13 +199,15 @@ export function PriceLists() {
         <>
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{t('priceLists')}</h2>
-            <Button
-              size="sm"
-              onClick={() => setShowCreateForm(!showCreateForm)}
-            >
-              <Plus className="h-4 w-4 mr-1.5" />
-              {t('createPriceList')}
-            </Button>
+            {lists.length === 0 && (
+              <Button
+                size="sm"
+                onClick={() => setShowCreateForm(!showCreateForm)}
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                {t('createPriceList')}
+              </Button>
+            )}
           </div>
 
           {showCreateForm && (
@@ -337,7 +351,28 @@ export function PriceLists() {
                             {item.converterBrand}
                           </Badge>
                         </td>
-                        <td className="py-3 px-2 text-center">{item.quantity}</td>
+                        <td className="py-3 px-2">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span className="w-8 text-center font-mono text-sm">{item.quantity}</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
                         <td className="py-3 px-2 text-right font-mono">
                           {item.unitPrice != null ? formatPrice(item.unitPrice) : '--'}
                         </td>

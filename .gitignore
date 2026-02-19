@@ -47,3 +47,15 @@ pnpm-debug.log*
 catalyser_nextjs/
 catalyser_project/
 db_dump/
+
+# Flutter
+apps/mobile/.dart_tool/
+apps/mobile/.packages
+apps/mobile/build/
+apps/mobile/.flutter-plugins
+apps/mobile/.flutter-plugins-dependencies
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
+apps/mobile/ios/Pods/
+apps/mobile/ios/.symlinks/
+*.iml

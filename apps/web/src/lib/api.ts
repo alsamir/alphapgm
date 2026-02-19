@@ -94,7 +94,7 @@ class ApiClient {
   }
 
   async getBrands(token?: string) {
-    return this.request<{ name: string; brand: string; count: number }[]>('/converters/brands', { token });
+    return this.request<{ name: string; count: number; brandImage?: string | null }[]>('/converters/brands', { token });
   }
 
   async createConverter(data: any, token: string) {
@@ -342,6 +342,14 @@ class ApiClient {
     });
   }
 
+  async updatePriceListItemQuantity(priceListId: number, itemId: number, quantity: number, token: string) {
+    return this.request<any>(`/pricelists/${priceListId}/items/${itemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+      token,
+    });
+  }
+
   async removePriceListItem(priceListId: number, itemId: number, token: string) {
     return this.request<any>(`/pricelists/${priceListId}/items/${itemId}`, {
       method: 'DELETE',
@@ -357,6 +365,84 @@ class ApiClient {
     });
     if (!response.ok) throw new ApiError('Export failed', response.status);
     return response.blob();
+  }
+
+  // Admin - User Price Lists
+  async getAdminUserPriceLists(userId: number, token: string) {
+    return this.request<any[]>(`/admin/users/${userId}/pricelists`, { token });
+  }
+
+  // Admin - Analytics
+  async getAdminTopConverters(token: string, limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<any[]>(`/admin/analytics/top-converters${query}`, { token });
+  }
+
+  async getAdminSearchVolume(token: string, days?: number) {
+    const query = days ? `?days=${days}` : '';
+    return this.request<any[]>(`/admin/analytics/search-volume${query}`, { token });
+  }
+
+  async getAdminActiveUsers(token: string, limit?: number) {
+    const query = limit ? `?limit=${limit}` : '';
+    return this.request<any[]>(`/admin/analytics/active-users${query}`, { token });
+  }
+
+  // Email verification
+  async verifyEmail(verificationToken: string) {
+    return this.request<any>(`/auth/verify-email?token=${encodeURIComponent(verificationToken)}`);
+  }
+
+  // Site Settings (public)
+  async getSiteSettings() {
+    return this.request<Record<string, string>>('/settings');
+  }
+
+  async updateSiteSettings(data: Record<string, string>, token: string) {
+    return this.request<any>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  // Admin - Image suggestions
+  async getImageSuggestions(params: Record<string, any>, token: string) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.set(key, String(value));
+      }
+    });
+    return this.request<any>(`/admin/image-suggestions?${query.toString()}`, { token });
+  }
+
+  async approveImageSuggestion(id: number, token: string) {
+    return this.request<any>(`/admin/image-suggestions/${id}/approve`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  async rejectImageSuggestion(id: number, token: string) {
+    return this.request<any>(`/admin/image-suggestions/${id}/reject`, {
+      method: 'POST',
+      token,
+    });
+  }
+
+  // Image suggestions (user)
+  async suggestImage(converterId: number, file: File, token: string) {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await fetch(`${this.baseUrl}/api/v1/images/${converterId}/suggest`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+      credentials: 'include',
+    });
+    if (!response.ok) throw new ApiError('Upload failed', response.status);
+    return response.json();
   }
 }
 

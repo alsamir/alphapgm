@@ -10,6 +10,8 @@ import { AdminUsers } from './admin-users';
 import { AdminConverters } from './admin-converters';
 import { AdminPricing } from './admin-pricing';
 import { AdminCredits } from './admin-credits';
+import { AdminAnalytics } from './admin-analytics';
+import { AdminSettings } from './admin-settings';
 import {
   Users,
   Package,
@@ -24,6 +26,8 @@ import {
   Clock,
   CircleDollarSign,
   Coins,
+  Settings,
+  BarChart3,
 } from 'lucide-react';
 import {
   LineChart,
@@ -43,7 +47,7 @@ import {
   AreaChart,
 } from 'recharts';
 
-type AdminTab = 'overview' | 'converters' | 'users' | 'pricing' | 'credits';
+type AdminTab = 'overview' | 'converters' | 'users' | 'pricing' | 'credits' | 'analytics' | 'settings';
 
 // Theme colors
 const COLORS = {
@@ -210,6 +214,8 @@ export function AdminDashboard() {
     { id: 'users' as AdminTab, label: 'Users', icon: Users },
     { id: 'pricing' as AdminTab, label: 'Pricing', icon: CircleDollarSign },
     { id: 'credits' as AdminTab, label: 'Credits', icon: Coins },
+    { id: 'analytics' as AdminTab, label: 'Analytics', icon: BarChart3 },
+    { id: 'settings' as AdminTab, label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -541,6 +547,8 @@ export function AdminDashboard() {
       {activeTab === 'users' && <AdminUsers />}
       {activeTab === 'pricing' && <AdminPricing />}
       {activeTab === 'credits' && <AdminCredits />}
+      {activeTab === 'analytics' && <AdminAnalytics />}
+      {activeTab === 'settings' && <AdminSettings />}
     </div>
   );
 }

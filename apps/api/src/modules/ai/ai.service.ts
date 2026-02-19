@@ -20,7 +20,7 @@ export class AiService {
     private creditsService: CreditsService,
   ) {
     const apiKey = this.configService.get('ANTHROPIC_API_KEY');
-    if (apiKey && apiKey !== 'sk-ant-...') {
+    if (apiKey && apiKey !== 'sk-ant-...' && !apiKey.includes('placeholder')) {
       this.client = new Anthropic({ apiKey });
     }
   }

@@ -13,6 +13,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { UsersModule } from './modules/users/users.module';
 import { PriceListsModule } from './modules/pricelists/pricelists.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { RedisModule } from './common/redis/redis.module';
 import { HealthController } from './health.controller';
 
@@ -30,9 +31,9 @@ import { HealthController } from './health.controller';
       envFilePath: ['.env', '../../.env'],
     }),
     ThrottlerModule.forRoot([
-      { name: 'short', ttl: 1000, limit: 3 },
-      { name: 'medium', ttl: 10000, limit: 20 },
-      { name: 'long', ttl: 60000, limit: 100 },
+      { name: 'short', ttl: 1000, limit: 20 },
+      { name: 'medium', ttl: 10000, limit: 100 },
+      { name: 'long', ttl: 60000, limit: 300 },
     ]),
     ScheduleModule.forRoot(),
     PrismaModule,
@@ -46,6 +47,7 @@ import { HealthController } from './health.controller';
     AiModule,
     AdminModule,
     PriceListsModule,
+    SettingsModule,
   ],
 })
 export class AppModule {}

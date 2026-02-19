@@ -1,0 +1,49 @@
+name: catalyser_mobile
+description: "Catalyser - Catalytic Converter Pricing Platform"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # State management
+  provider: ^6.1.2
+  # HTTP client
+  http: ^1.2.2
+  # Secure storage for tokens
+  flutter_secure_storage: ^9.2.2
+  # URL launcher (for PDF export download)
+  url_launcher: ^6.3.1
+  # Image caching
+  cached_network_image: ^3.4.1
+  # Pull to refresh
+  pull_to_refresh: ^2.0.0
+  # Charts for analytics
+  fl_chart: ^0.70.2
+  # Internationalization
+  intl: ^0.19.0
+  # Share functionality
+  share_plus: ^10.1.4
+  # Path provider for file downloads
+  path_provider: ^2.1.4
+  # PDF viewer
+  open_file: ^3.5.10
+  # Shimmer loading
+  shimmer: ^3.0.0
+  # Google fonts
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
+    - assets/icons/

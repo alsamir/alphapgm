@@ -71,10 +71,15 @@ export class ConvertersController {
       // Pricing calculation is best-effort
     }
 
+    // Strip individual metal values — only return boolean presence + single total
+    const { pt, pd, rh, ...safeConverter } = converter;
     return {
       success: true,
       data: {
-        ...converter,
+        ...safeConverter,
+        hasPt: pt != null && pt !== '' && parseFloat(String(pt)) > 0,
+        hasPd: pd != null && pd !== '' && parseFloat(String(pd)) > 0,
+        hasRh: rh != null && rh !== '' && parseFloat(String(rh)) > 0,
         calculatedPrice,
       },
     };

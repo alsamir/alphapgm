@@ -20,7 +20,8 @@
     "getStarted": "Commencer",
     "dashboard": "Tableau de bord",
     "admin": "Admin",
-    "signOut": "Déconnexion"
+    "signOut": "Déconnexion",
+    "priceLists": "Listes de prix"
   },
   "hero": {
     "badge": "Prix des métaux précieux en direct",
@@ -174,7 +175,9 @@
     "signInToView": "Connectez-vous pour voir l'image",
     "notFound": "Catalyseur non trouvé",
     "addToPriceList": "Ajouter à la liste de prix",
-    "addedToPriceList": "Ajouté à la liste de prix"
+    "addedToPriceList": "Ajouté à la liste de prix",
+    "basedOnCurrentPrices": "Basé sur les prix actuels des métaux",
+    "addMore": "Ajouter plus"
   },
   "footer": {
     "description": "Plateforme professionnelle d'évaluation de catalyseurs avec données de marché en temps réel.",
@@ -329,6 +332,13 @@
     "creditHistory": "Historique des crédits",
     "userHistory": "Historique de l'utilisateur",
     "noSearchHistory": "Aucun historique de recherche",
-    "noCreditHistory": "Aucun historique de crédits"
+    "noCreditHistory": "Aucun historique de crédits",
+    "analytics": "Analytique",
+    "topConverters": "Convertisseurs les plus consultés",
+    "searchVolume": "Volume de recherche",
+    "activeUsers": "Utilisateurs les plus actifs",
+    "views": "vues",
+    "searches": "recherches",
+    "creditsUsed": "crédits utilisés"
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res, Req, UseGuards, HttpCode, HttpStatus, Get } from '@nestjs/common';
+import { Controller, Post, Body, Res, Req, UseGuards, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -78,6 +78,13 @@ export class AuthController {
       path: '/api/v1/auth/refresh',
     });
     return { success: true, message: 'Logged out successfully' };
+  }
+
+  @Public()
+  @Get('verify-email')
+  async verifyEmail(@Query('token') token: string) {
+    const result = await this.authService.verifyEmail(token);
+    return { success: true, data: result };
   }
 
   @Get('me')

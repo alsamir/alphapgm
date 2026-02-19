@@ -86,4 +86,28 @@ export class AdminController {
     const result = await this.adminService.getUserHistory(id);
     return { success: true, data: result };
   }
+
+  @Get('users/:id/pricelists')
+  async getUserPriceLists(@Param('id', ParseIntPipe) id: number) {
+    const result = await this.adminService.getUserPriceLists(id);
+    return { success: true, data: result };
+  }
+
+  @Get('analytics/top-converters')
+  async getTopConverters(@Query('limit') limit?: string) {
+    const result = await this.adminService.getTopConverters(parseInt(limit || '20', 10));
+    return { success: true, data: result };
+  }
+
+  @Get('analytics/search-volume')
+  async getSearchVolume(@Query('days') days?: string) {
+    const result = await this.adminService.getSearchVolume(parseInt(days || '30', 10));
+    return { success: true, data: result };
+  }
+
+  @Get('analytics/active-users')
+  async getActiveUsers(@Query('limit') limit?: string) {
+    const result = await this.adminService.getActiveUsers(parseInt(limit || '20', 10));
+    return { success: true, data: result };
+  }
 }

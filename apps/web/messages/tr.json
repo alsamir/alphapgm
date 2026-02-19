@@ -20,7 +20,8 @@
     "getStarted": "Başla",
     "dashboard": "Panel",
     "admin": "Yönetici",
-    "signOut": "Çıkış Yap"
+    "signOut": "Çıkış Yap",
+    "priceLists": "Fiyat Listeleri"
   },
   "hero": {
     "badge": "Canlı Değerli Metal Fiyatları",
@@ -174,7 +175,9 @@
     "signInToView": "Görseli görmek için giriş yapın",
     "notFound": "Konvertör bulunamadı",
     "addToPriceList": "Fiyat listesine ekle",
-    "addedToPriceList": "Fiyat listesine eklendi"
+    "addedToPriceList": "Fiyat listesine eklendi",
+    "basedOnCurrentPrices": "Güncel metal fiyatlarına göre",
+    "addMore": "Daha Ekle"
   },
   "footer": {
     "description": "Gerçek zamanlı piyasa verileriyle profesyonel katalitik konvertör fiyatlandırma platformu.",
@@ -329,6 +332,13 @@
     "creditHistory": "Kredi Geçmişi",
     "userHistory": "Kullanıcı Geçmişi",
     "noSearchHistory": "Arama geçmişi yok",
-    "noCreditHistory": "Kredi geçmişi yok"
+    "noCreditHistory": "Kredi geçmişi yok",
+    "analytics": "Analitik",
+    "topConverters": "En Çok Görüntülenen Katalizörler",
+    "searchVolume": "Arama Hacmi",
+    "activeUsers": "En Aktif Kullanıcılar",
+    "views": "görüntüleme",
+    "searches": "arama",
+    "creditsUsed": "kredi kullanıldı"
   }
 }

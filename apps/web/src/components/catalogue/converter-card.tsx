@@ -5,7 +5,10 @@ import { useTranslations } from 'next-intl';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { ArrowRight, ImageOff } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+
+const CDN_BASE = 'https://apg.fra1.cdn.digitaloceanspaces.com';
+const PLACEHOLDER = '/converter-placeholder.svg';
 
 interface ConverterCardProps {
   converter: {
@@ -19,11 +22,24 @@ interface ConverterCardProps {
   viewMode: 'grid' | 'list';
 }
 
+function getConverterImageUrl(name: string) {
+  const cleanName = name.trim().split(' / ')[0].trim();
+  return `${CDN_BASE}/images/${encodeURIComponent(cleanName)}.png`;
+}
+
+function getBrandLogoUrl(brandImage: string) {
+  return `${CDN_BASE}/logo/${brandImage}`;
+}
+
 export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
   const t = useTranslations('catalogue');
 
-  // Use public thumbnail endpoint - available for all users
-  const thumbnailSrc = `/api/v1/images/thumb/${converter.id}`;
+  const thumbnailSrc = getConverterImageUrl(converter.name);
+  const brandLogoSrc = converter.brandImage ? getBrandLogoUrl(converter.brandImage) : null;
+
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    (e.target as HTMLImageElement).src = PLACEHOLDER;
+  };
 
   if (viewMode === 'list') {
     return (
@@ -36,22 +52,14 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
           <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               {/* Thumbnail */}
-              <div className="h-16 w-16 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {thumbnailSrc ? (
-                  <img
-                    src={thumbnailSrc}
-                    alt={converter.name}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                      (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                ) : null}
-                <div className={`flex items-center justify-center h-full w-full ${thumbnailSrc ? 'hidden' : ''}`}>
-                  <ImageOff className="h-5 w-5 text-muted-foreground/50" />
-                </div>
+              <div className="h-16 w-16 rounded-lg bg-secondary flex-shrink-0 overflow-hidden">
+                <img
+                  src={thumbnailSrc}
+                  alt={converter.name}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  onError={handleImgError}
+                />
               </div>
 
               {/* Name & Brand */}
@@ -59,9 +67,19 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
                 <h3 className="font-medium truncate group-hover:text-primary transition-colors">
                   {converter.name}
                 </h3>
-                <Badge variant="secondary" className="mt-1 text-[10px] px-1.5 py-0">
-                  {converter.brand}
-                </Badge>
+                <div className="flex items-center gap-2 mt-1">
+                  {brandLogoSrc && (
+                    <img
+                      src={brandLogoSrc}
+                      alt={converter.brand}
+                      className="h-4 w-4 object-contain"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
+                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                    {converter.brand}
+                  </Badge>
+                </div>
               </div>
 
               {/* Weight */}
@@ -90,24 +108,29 @@ export function ConverterCard({ converter, viewMode }: ConverterCardProps) {
         <Card className="h-full bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer overflow-hidden">
           {/* Image area */}
           <div className="aspect-[4/3] bg-secondary relative overflow-hidden">
-            {thumbnailSrc ? (
-              <img
-                src={thumbnailSrc}
-                alt={converter.name}
-                className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-                loading="lazy"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <div className={`h-full w-full flex items-center justify-center text-muted-foreground/40 absolute inset-0 ${thumbnailSrc ? 'hidden' : ''}`}>
-              <ImageOff className="h-10 w-10" />
+            <img
+              src={thumbnailSrc}
+              alt={converter.name}
+              className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
+              onError={handleImgError}
+            />
+            {/* Brand badge */}
+            <div className="absolute top-2 left-2 flex items-center gap-1.5">
+              {brandLogoSrc && (
+                <div className="h-6 w-6 rounded bg-background/80 backdrop-blur-sm p-0.5 border border-border/50">
+                  <img
+                    src={brandLogoSrc}
+                    alt={converter.brand}
+                    className="h-full w-full object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
+                  />
+                </div>
+              )}
+              <Badge variant="secondary">
+                {converter.brand}
+              </Badge>
             </div>
-            <Badge className="absolute top-2 left-2" variant="secondary">
-              {converter.brand}
-            </Badge>
           </div>
 
           {/* Card body */}

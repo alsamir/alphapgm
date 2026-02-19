@@ -50,7 +50,13 @@ export function ChatWidget() {
         setCreditsRemaining(res.data.creditsRemaining);
       }
     } catch (err: any) {
-      setMessages((prev) => [...prev, { role: 'assistant', content: `Error: ${err.message || 'Failed to get response'}` }]);
+      const errorMsg = err.message || 'Failed to get response';
+      const displayMsg = errorMsg.includes('Insufficient credits')
+        ? 'You don\'t have enough credits. Please purchase more credits from your dashboard.'
+        : errorMsg.includes('not configured')
+        ? 'AI assistant is currently unavailable. Please try again later.'
+        : `Sorry, something went wrong. ${errorMsg}`;
+      setMessages((prev) => [...prev, { role: 'assistant', content: displayMsg }]);
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +35,9 @@ type Tab = 'overview' | 'profile' | 'subscription' | 'credits' | 'searches' | 'a
 export function DashboardContent() {
   const { user, token } = useAuth();
   const t = useTranslations('dashboard');
-  const [activeTab, setActiveTab] = useState<Tab>('overview');
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get('tab') as Tab) || 'overview';
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -238,7 +241,7 @@ function OverviewTab({
               className="h-auto py-4 flex-col gap-2"
               asChild
             >
-              <Link href="/">
+              <Link href="/catalogue">
                 <Search className="h-5 w-5 text-primary" />
                 <span className="text-xs">{t('searchConverters')}</span>
               </Link>

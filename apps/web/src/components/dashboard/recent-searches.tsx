@@ -78,7 +78,7 @@ export function RecentSearches() {
                 {t('searchToSeeHistory')}
               </p>
               <Button variant="outline" size="sm" className="mt-4" asChild>
-                <Link href="/">{t('searchConverters')}</Link>
+                <Link href="/catalogue">{t('searchConverters')}</Link>
               </Button>
             </div>
           ) : (

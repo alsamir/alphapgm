@@ -20,7 +20,8 @@
     "getStarted": "Aan de slag",
     "dashboard": "Dashboard",
     "admin": "Admin",
-    "signOut": "Uitloggen"
+    "signOut": "Uitloggen",
+    "priceLists": "Prijslijsten"
   },
   "hero": {
     "badge": "Realtime edelmetaalprijzen",
@@ -174,7 +175,9 @@
     "signInToView": "Log in om afbeelding te bekijken",
     "notFound": "Katalysator niet gevonden",
     "addToPriceList": "Toevoegen aan prijslijst",
-    "addedToPriceList": "Toegevoegd aan prijslijst"
+    "addedToPriceList": "Toegevoegd aan prijslijst",
+    "basedOnCurrentPrices": "Gebaseerd op huidige metaalprijzen",
+    "addMore": "Meer toevoegen"
   },
   "footer": {
     "description": "Professioneel platform voor katalysatorwaardering met realtime marktgegevens.",
@@ -329,6 +332,13 @@
     "creditHistory": "Creditgeschiedenis",
     "userHistory": "Gebruikersgeschiedenis",
     "noSearchHistory": "Geen zoekgeschiedenis",
-    "noCreditHistory": "Geen creditgeschiedenis"
+    "noCreditHistory": "Geen creditgeschiedenis",
+    "analytics": "Analyse",
+    "topConverters": "Meest bekeken katalysatoren",
+    "searchVolume": "Zoekvolume",
+    "activeUsers": "Meest actieve gebruikers",
+    "views": "weergaven",
+    "searches": "zoekopdrachten",
+    "creditsUsed": "credits gebruikt"
   }
 }

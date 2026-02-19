@@ -43,8 +43,9 @@ interface Converter {
 }
 
 interface BrandOption {
-  brand: string;
+  name: string;
   count: number;
+  brandImage?: string | null;
 }
 
 interface ConverterFormData {
@@ -453,8 +454,8 @@ export function AdminConverters() {
             >
               <option value="">All Brands</option>
               {brands.map((b) => (
-                <option key={b.brand} value={b.brand}>
-                  {b.brand} ({b.count})
+                <option key={b.name} value={b.name}>
+                  {b.name} ({b.count})
                 </option>
               ))}
             </select>
@@ -647,7 +648,7 @@ export function AdminConverters() {
               />
               <datalist id="brand-suggestions">
                 {brands.map((b) => (
-                  <option key={b.brand} value={b.brand} />
+                  <option key={b.name} value={b.name} />
                 ))}
               </datalist>
             </div>

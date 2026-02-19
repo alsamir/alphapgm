@@ -20,7 +20,8 @@
     "getStarted": "Get Started",
     "dashboard": "Dashboard",
     "admin": "Admin",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "priceLists": "Price Lists"
   },
   "hero": {
     "badge": "Live Precious Metal Pricing",
@@ -186,7 +187,9 @@
     "signInToView": "Sign in to view image",
     "notFound": "Converter not found",
     "addToPriceList": "Add to Price List",
-    "addedToPriceList": "Added to price list"
+    "addedToPriceList": "Added to price list",
+    "basedOnCurrentPrices": "Based on current metal prices",
+    "addMore": "Add More"
   },
   "language": {
     "label": "Language",
@@ -329,6 +332,13 @@
     "creditHistory": "Credit History",
     "userHistory": "User History",
     "noSearchHistory": "No search history",
-    "noCreditHistory": "No credit history"
+    "noCreditHistory": "No credit history",
+    "analytics": "Analytics",
+    "topConverters": "Top Viewed Converters",
+    "searchVolume": "Search Volume",
+    "activeUsers": "Most Active Users",
+    "views": "views",
+    "searches": "searches",
+    "creditsUsed": "credits used"
   }
 }

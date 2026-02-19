@@ -224,6 +224,34 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
+  async verifyEmail(token: string) {
+    if (!token) {
+      throw new BadRequestException('Verification token is required');
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: { verificationToken: token },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Invalid or expired verification token');
+    }
+
+    if (user.emailVerified) {
+      return { message: 'Email already verified' };
+    }
+
+    await this.prisma.user.update({
+      where: { userId: user.userId },
+      data: {
+        emailVerified: true,
+        verificationToken: null,
+      },
+    });
+
+    return { message: 'Email verified successfully' };
+  }
+
   async validateUser(userId: number) {
     const user = await this.prisma.user.findUnique({
       where: { userId: BigInt(userId) },

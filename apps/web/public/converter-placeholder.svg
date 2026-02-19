@@ -1,0 +1,24 @@
+<svg width="600" height="450" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#0a0a1a"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00e88f" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#00e88f" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="450" fill="url(#bg)"/>
+  <rect x="0" y="0" width="600" height="450" fill="url(#accent)"/>
+  <!-- Converter icon -->
+  <g transform="translate(300,180)" opacity="0.3">
+    <ellipse cx="0" cy="0" rx="60" ry="35" fill="none" stroke="#00e88f" stroke-width="2"/>
+    <line x1="-80" y1="0" x2="-60" y2="0" stroke="#374151" stroke-width="3"/>
+    <line x1="60" y1="0" x2="80" y2="0" stroke="#374151" stroke-width="3"/>
+    <rect x="-50" y="-25" width="100" height="50" rx="4" fill="none" stroke="#374151" stroke-width="1" stroke-dasharray="4,3"/>
+  </g>
+  <!-- Text -->
+  <text x="300" y="260" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#00e88f" opacity="0.5">CATALYSER</text>
+  <text x="300" y="285" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="12" fill="#6b7280">No image available</text>
+</svg>

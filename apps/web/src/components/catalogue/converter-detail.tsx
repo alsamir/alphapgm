@@ -10,16 +10,18 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Coins, ImageOff, CheckCircle, ArrowRight, Plus, Check } from 'lucide-react';
+import { ArrowLeft, Lock, Coins, CheckCircle, ArrowRight, Plus, Check, Camera, Upload } from 'lucide-react';
 import { CurrencySelector, useCurrency } from '@/components/ui/currency-selector';
+import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 
 interface Props {
   converterId: number;
 }
 
-function isMetalPresent(value: string | null | undefined): boolean {
+function isMetalPresent(value: boolean | string | null | undefined): boolean {
+  if (typeof value === 'boolean') return value;
   if (!value) return false;
-  const normalized = value.replace(',', '.');
+  const normalized = String(value).replace(',', '.');
   const num = parseFloat(normalized);
   return !isNaN(num) && num > 0;
 }
@@ -43,9 +45,13 @@ export function ConverterDetail({ converterId }: Props) {
 
   // Price list state
   const [priceLists, setPriceLists] = useState<{ id: number; name: string }[]>([]);
-  const [showPriceListMenu, setShowPriceListMenu] = useState(false);
-  const [addedToList, setAddedToList] = useState<number | null>(null);
+  const [addedToList, setAddedToList] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
+
+  // Image suggestion state
+  const [imageError, setImageError] = useState(false);
+  const [suggestingImage, setSuggestingImage] = useState(false);
+  const [imageSuggested, setImageSuggested] = useState(false);
 
   useEffect(() => {
     const fetchConverter = async () => {
@@ -84,19 +90,45 @@ export function ConverterDetail({ converterId }: Props) {
     fetchLists();
   }, [token, isAuthenticated]);
 
-  const handleAddToPriceList = async (priceListId: number) => {
+  const handleAddToPriceList = async () => {
     if (!token || addingToList) return;
     setAddingToList(true);
     try {
-      await api.addPriceListItem(priceListId, converterId, 1, token);
-      setAddedToList(priceListId);
-      setShowPriceListMenu(false);
-      setTimeout(() => setAddedToList(null), 3000);
+      let listId: number;
+      if (priceLists.length > 0) {
+        listId = priceLists[0].id;
+      } else {
+        const res = await api.createPriceList('My Price List', token);
+        listId = res.data.id;
+        setPriceLists([{ id: listId, name: res.data.name }]);
+      }
+      await api.addPriceListItem(listId, converterId, 1, token);
+      setAddedToList(true);
     } catch (err) {
       console.error('Failed to add to price list:', err);
     } finally {
       setAddingToList(false);
     }
+  };
+
+  const handleSuggestImage = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file || !token) return;
+      setSuggestingImage(true);
+      try {
+        await api.suggestImage(converterId, file, token);
+        setImageSuggested(true);
+      } catch (err) {
+        console.error('Failed to suggest image:', err);
+      } finally {
+        setSuggestingImage(false);
+      }
+    };
+    input.click();
   };
 
   // Fetch related converters when we have a brand
@@ -157,9 +189,10 @@ export function ConverterDetail({ converterId }: Props) {
     );
   }
 
-  const hasPt = isMetalPresent(converter.pt);
-  const hasPd = isMetalPresent(converter.pd);
-  const hasRh = isMetalPresent(converter.rh);
+  // API returns hasPt/hasPd/hasRh booleans — never raw content values
+  const hasPt = isMetalPresent(converter.hasPt);
+  const hasPd = isMetalPresent(converter.hasPd);
+  const hasRh = isMetalPresent(converter.hasRh);
   const hasAnyMetal = hasPt || hasPd || hasRh;
 
   return (
@@ -175,31 +208,21 @@ export function ConverterDetail({ converterId }: Props) {
       <div className="grid md:grid-cols-2 gap-8">
         {/* Image Section */}
         <div className="aspect-[4/3] rounded-xl bg-card border border-border overflow-hidden relative">
-          {isAuthenticated ? (
-            <>
+          <img
+            src={`https://apg.fra1.cdn.digitaloceanspaces.com/images/${encodeURIComponent(converter.name.trim().split(' / ')[0].trim())}.png`}
+            alt={converter.name}
+            className="h-full w-full object-contain"
+            onError={(e) => { (e.target as HTMLImageElement).src = '/converter-placeholder.svg'; }}
+          />
+          {/* Brand logo overlay */}
+          {converter.brandImage && (
+            <div className="absolute bottom-3 right-3 h-10 w-10 rounded-lg bg-background/80 backdrop-blur-sm p-1 border border-border/50">
               <img
-                src={`/api/v1/images/${converter.id}`}
-                alt={converter.name}
+                src={`https://apg.fra1.cdn.digitaloceanspaces.com/logo/${converter.brandImage}`}
+                alt={converter.brand}
                 className="h-full w-full object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                  const fallback = (e.target as HTMLImageElement).nextElementSibling;
-                  if (fallback) (fallback as HTMLElement).classList.remove('hidden');
-                }}
+                onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
               />
-              <div className="hidden h-full w-full flex items-center justify-center text-muted-foreground absolute inset-0">
-                <div className="text-center">
-                  <ImageOff className="h-12 w-12 mx-auto mb-2 text-muted-foreground/40" />
-                  <p className="text-sm">{t('noImage')}</p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="h-full w-full flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <ImageOff className="h-12 w-12 mx-auto mb-2 text-muted-foreground/40" />
-                <p className="text-sm">{t('signInToView')}</p>
-              </div>
             </div>
           )}
         </div>
@@ -239,7 +262,7 @@ export function ConverterDetail({ converterId }: Props) {
           <Separator />
 
           {/* Pricing / Metal Content Section */}
-          {isAuthenticated && converter.pt !== undefined ? (
+          {isAuthenticated && converter.hasPt !== undefined ? (
             <div className="space-y-4">
               {/* Credit usage indicator */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -284,101 +307,61 @@ export function ConverterDetail({ converterId }: Props) {
                 </div>
               )}
 
-              {/* Full Metal Breakdown */}
-              <Card className="border-primary/30">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Coins className="h-5 w-5 text-primary" />
-                      {t('metalContent')}
-                    </CardTitle>
-                    <CurrencySelector />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="text-center p-3 rounded-lg bg-secondary/50">
-                      <div className="text-xs text-muted-foreground mb-1">{t('platinum')}</div>
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: hasPt ? '#E5E4E2' : '#555' }}
-                        />
-                      </div>
-                      <div className="text-lg font-bold">{converter.pt || '0'}</div>
-                      <div className="text-xs text-muted-foreground">{t('gPerKg')}</div>
+              {/* Estimated Value Card */}
+              {converter.calculatedPrice != null && (
+                <Card className="border-primary/30">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Coins className="h-5 w-5 text-primary" />
+                        {t('estimatedValue')}
+                      </CardTitle>
+                      <CurrencySelector />
                     </div>
-                    <div className="text-center p-3 rounded-lg bg-secondary/50">
-                      <div className="text-xs text-muted-foreground mb-1">{t('palladium')}</div>
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: hasPd ? '#CFB53B' : '#555' }}
-                        />
-                      </div>
-                      <div className="text-lg font-bold">{converter.pd || '0'}</div>
-                      <div className="text-xs text-muted-foreground">{t('gPerKg')}</div>
-                    </div>
-                    <div className="text-center p-3 rounded-lg bg-secondary/50">
-                      <div className="text-xs text-muted-foreground mb-1">{t('rhodium')}</div>
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        <span
-                          className="inline-block h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: hasRh ? '#4A90D9' : '#555' }}
-                        />
-                      </div>
-                      <div className="text-lg font-bold">{converter.rh || '0'}</div>
-                      <div className="text-xs text-muted-foreground">{t('gPerKg')}</div>
-                    </div>
-                  </div>
-
-                  {converter.calculatedPrice != null && (
-                    <div className="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
-                      <div className="text-sm text-muted-foreground">{t('estimatedValue')}</div>
-                      <div className="text-3xl font-bold text-primary mt-1">
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                      <div className="text-3xl font-bold text-primary">
                         {formatPrice(Number(converter.calculatedPrice))}
                       </div>
+                      <div className="text-sm text-muted-foreground mt-2">
+                        {t('basedOnCurrentPrices')}
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Add to Price List */}
-              {priceLists.length > 0 && (
-                <div className="relative">
-                  {addedToList ? (
+              <div>
+                {addedToList ? (
+                  <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 text-sm text-green-500">
                       <Check className="h-4 w-4" />
                       <span>{t('addedToPriceList')}</span>
                     </div>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowPriceListMenu(!showPriceListMenu)}
-                        disabled={addingToList}
-                      >
-                        <Plus className="h-4 w-4 mr-1.5" />
-                        {t('addToPriceList')}
-                      </Button>
-                      {showPriceListMenu && (
-                        <div className="absolute top-full left-0 mt-1 z-10 bg-popover border border-border rounded-lg shadow-lg p-1 min-w-[200px]">
-                          {priceLists.map((list) => (
-                            <button
-                              key={list.id}
-                              className="w-full text-left px-3 py-2 text-sm rounded hover:bg-secondary transition-colors"
-                              onClick={() => handleAddToPriceList(list.id)}
-                            >
-                              {list.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setAddedToList(false); handleAddToPriceList(); }}
+                      disabled={addingToList}
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      {t('addMore')}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddToPriceList}
+                    disabled={addingToList}
+                  >
+                    <Plus className="h-4 w-4 mr-1.5" />
+                    {addingToList ? '...' : t('addToPriceList')}
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             /* Unauthenticated: blurred/locked pricing section */
@@ -453,20 +436,31 @@ export function ConverterDetail({ converterId }: Props) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {relatedConverters.map((related) => (
               <Link key={related.id} href={`/converter/${related.id}`}>
-                <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer h-full">
-                  <CardContent className="p-4">
-                    <h3 className="font-medium text-sm truncate hover:text-primary transition-colors">
+                <Card className="bg-card/50 border-border/50 hover:border-primary/30 transition-all cursor-pointer h-full group overflow-hidden">
+                  {/* Thumbnail image */}
+                  <div className="aspect-[4/3] bg-secondary/30 overflow-hidden relative">
+                    <img
+                      src={`https://apg.fra1.cdn.digitaloceanspaces.com/images/${encodeURIComponent(related.name.trim().split(' / ')[0].trim())}.png`}
+                      alt={related.name}
+                      className="h-full w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/converter-placeholder.svg'; }}
+                    />
+                  </div>
+                  <CardContent className="p-3">
+                    <h3 className="font-medium text-sm truncate group-hover:text-primary transition-colors">
                       {related.name}
                     </h3>
-                    <Badge variant="secondary" className="mt-2 text-[10px]">
-                      {related.brand}
-                    </Badge>
-                    {related.weight && related.weight !== '0' && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {related.weight} kg
-                      </p>
-                    )}
-                    <div className="flex items-center gap-1 text-muted-foreground text-xs mt-3">
+                    <div className="flex items-center justify-between mt-2">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {related.brand}
+                      </Badge>
+                      {related.weight && related.weight !== '0' && (
+                        <span className="text-xs text-muted-foreground">
+                          {related.weight} kg
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 text-primary text-xs mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <span>{t('viewDetails')}</span>
                       <ArrowRight className="h-3 w-3" />
                     </div>

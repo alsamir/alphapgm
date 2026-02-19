@@ -111,6 +111,7 @@ export class AdminService {
       amount: e.amount,
       balanceAfter: e.balanceAfter,
       sourceDetail: e.sourceDetail || '',
+      sourceId: (e as any).sourceId ?? null,
       createdAt: e.createdAt.toISOString(),
     }));
 
@@ -156,6 +157,7 @@ export class AdminService {
         amount: e.amount,
         balanceAfter: e.balanceAfter,
         sourceDetail: e.sourceDetail,
+        sourceId: e.sourceId ?? null,
         createdAt: e.createdAt.toISOString(),
       })),
     };
@@ -212,5 +214,102 @@ export class AdminService {
     ]);
 
     return { success: true, newBalance: newAvailable };
+  }
+
+  async getTopConverters(limit: number = 20) {
+    const results: any[] = await this.prisma.$queryRaw`
+      SELECT cl.source_id AS sourceId, COUNT(*) AS viewCount,
+             ad.name, ad.brand
+      FROM credit_ledger cl
+      JOIN all_data ad ON ad.id = cl.source_id
+      WHERE cl.source_id IS NOT NULL AND cl.type = 'CONSUMPTION'
+      GROUP BY cl.source_id, ad.name, ad.brand
+      ORDER BY viewCount DESC
+      LIMIT ${limit}
+    `;
+    return results.map((r) => ({
+      sourceId: Number(r.sourceId),
+      name: r.name,
+      brand: r.brand,
+      viewCount: Number(r.viewCount),
+    }));
+  }
+
+  async getSearchVolume(days: number = 30) {
+    const results: any[] = await this.prisma.$queryRaw`
+      SELECT DATE(created_at) AS date, COUNT(*) AS count
+      FROM credit_ledger
+      WHERE type = 'CONSUMPTION'
+        AND created_at >= DATE_SUB(NOW(), INTERVAL ${days} DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    `;
+    return results.map((r) => ({
+      date: r.date instanceof Date ? r.date.toISOString().split('T')[0] : String(r.date),
+      count: Number(r.count),
+    }));
+  }
+
+  async getActiveUsers(limit: number = 20) {
+    const results: any[] = await this.prisma.$queryRaw`
+      SELECT cl.user_id AS userId, u.email, u.username,
+             COUNT(*) AS searchCount, SUM(ABS(cl.amount)) AS totalSpent
+      FROM credit_ledger cl
+      JOIN user u ON u.user_id = cl.user_id
+      WHERE cl.amount < 0
+      GROUP BY cl.user_id, u.email, u.username
+      ORDER BY totalSpent DESC
+      LIMIT ${limit}
+    `;
+    return results.map((r) => ({
+      userId: Number(r.userId),
+      email: r.email,
+      username: r.username,
+      searchCount: Number(r.searchCount),
+      totalSpent: Number(r.totalSpent),
+    }));
+  }
+
+  async getUserPriceLists(userId: number) {
+    const bigUserId = BigInt(userId);
+    const lists = await this.prisma.priceList.findMany({
+      where: { userId: bigUserId },
+      include: {
+        items: true,
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    // Get converter details for items
+    const allConverterIds = lists.flatMap((l) => l.items.map((i) => i.converterId));
+    const converters = allConverterIds.length > 0
+      ? await this.prisma.allData.findMany({
+          where: { id: { in: allConverterIds } },
+          select: { id: true, name: true, brand: true },
+        })
+      : [];
+    const converterMap = new Map(converters.map((c) => [c.id, c]));
+
+    return lists.map((list) => ({
+      id: list.id,
+      name: list.name,
+      status: list.status,
+      itemCount: list.items.length,
+      total: list.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0),
+      items: list.items.map((item) => {
+        const conv = converterMap.get(item.converterId);
+        return {
+          id: item.id,
+          converterId: item.converterId,
+          converterName: conv?.name || 'Unknown',
+          converterBrand: conv?.brand || 'Unknown',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: item.totalPrice,
+        };
+      }),
+      createdAt: list.createdAt.toISOString(),
+      updatedAt: list.updatedAt.toISOString(),
+    }));
   }
 }

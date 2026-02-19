@@ -1,5 +1,5 @@
 import {
-  Controller, Get, Post, Delete, Body, Param, ParseIntPipe,
+  Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe,
   UseGuards, Res, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -61,6 +61,19 @@ export class PriceListsController {
     return { success: true, data: item };
   }
 
+  @Put(':id/items/:itemId')
+  async updateItemQuantity(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('itemId', ParseIntPipe) itemId: number,
+    @Body() body: { quantity: number },
+    @CurrentUser('userId') userId: number,
+  ) {
+    const result = await this.priceListsService.updateItemQuantity(
+      id, itemId, BigInt(userId), body.quantity,
+    );
+    return { success: true, data: result };
+  }
+
   @Delete(':id/items/:itemId')
   @HttpCode(HttpStatus.OK)
   async removeItem(
@@ -78,9 +91,9 @@ export class PriceListsController {
     @CurrentUser('userId') userId: number,
     @Res() res: Response,
   ) {
-    const content = await this.priceListsService.exportAsText(id, BigInt(userId));
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Content-Disposition', `attachment; filename="pricelist-${id}.txt"`);
-    res.send(content);
+    const pdfBuffer = await this.priceListsService.exportAsPdf(id, BigInt(userId));
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="pricelist-${id}.pdf"`);
+    res.send(pdfBuffer);
   }
 }

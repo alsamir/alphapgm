@@ -20,7 +20,8 @@
     "getStarted": "Inizia",
     "dashboard": "Pannello",
     "admin": "Admin",
-    "signOut": "Esci"
+    "signOut": "Esci",
+    "priceLists": "Listini prezzi"
   },
   "hero": {
     "badge": "Prezzi dei metalli preziosi in tempo reale",
@@ -174,7 +175,9 @@
     "signInToView": "Accedi per vedere l'immagine",
     "notFound": "Catalizzatore non trovato",
     "addToPriceList": "Aggiungi al listino",
-    "addedToPriceList": "Aggiunto al listino"
+    "addedToPriceList": "Aggiunto al listino",
+    "basedOnCurrentPrices": "Basato sui prezzi attuali dei metalli",
+    "addMore": "Aggiungi altro"
   },
   "footer": {
     "description": "Piattaforma professionale per la valutazione di catalizzatori con dati di mercato in tempo reale.",
@@ -329,6 +332,13 @@
     "creditHistory": "Cronologia crediti",
     "userHistory": "Cronologia utente",
     "noSearchHistory": "Nessuna cronologia di ricerca",
-    "noCreditHistory": "Nessuna cronologia crediti"
+    "noCreditHistory": "Nessuna cronologia crediti",
+    "analytics": "Analisi",
+    "topConverters": "Convertitori più visti",
+    "searchVolume": "Volume di ricerca",
+    "activeUsers": "Utenti più attivi",
+    "views": "visualizzazioni",
+    "searches": "ricerche",
+    "creditsUsed": "crediti usati"
   }
 }

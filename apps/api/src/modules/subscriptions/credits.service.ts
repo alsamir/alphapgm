@@ -49,6 +49,7 @@ export class CreditsService {
       balanceAfter: e.balanceAfter,
       type: e.type,
       sourceDetail: e.sourceDetail,
+      sourceId: e.sourceId ?? null,
       createdAt: e.createdAt.toISOString(),
     }));
     return {
