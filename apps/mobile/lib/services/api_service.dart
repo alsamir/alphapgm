@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
 
@@ -167,6 +168,26 @@ class ApiService {
     return _request('GET', '/ai/history', token: token);
   }
 
+  // AI Image Identification
+  Future<Map<String, dynamic>> identifyConverterByImage(File imageFile, String token, {String? message}) async {
+    final uri = Uri.parse('$_baseUrl/ai/identify');
+    final request = http.MultipartRequest('POST', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+    if (message != null && message.isNotEmpty) {
+      request.fields['message'] = message;
+    }
+
+    final streamResponse = await request.send();
+    final response = await http.Response.fromStream(streamResponse);
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode >= 400) {
+      throw ApiException(data['message'] ?? 'Upload failed', response.statusCode, data);
+    }
+    return data;
+  }
+
   // User Profile
   Future<Map<String, dynamic>> getProfile(String token) async {
     return _request('GET', '/users/profile', token: token);
@@ -211,6 +232,21 @@ class ApiService {
 
   Future<Map<String, dynamic>> getAdminActiveUsers(String token) async {
     return _request('GET', '/admin/analytics/active-users', token: token);
+  }
+
+  // Admin - Activity by Country
+  Future<Map<String, dynamic>> getActivityByCountry(String token) async {
+    return _request('GET', '/admin/analytics/activity-by-country', token: token);
+  }
+
+  // Admin - User Locations
+  Future<Map<String, dynamic>> getUserLocations(String token) async {
+    return _request('GET', '/admin/analytics/user-locations', token: token);
+  }
+
+  // Admin - AI Image Uploads
+  Future<Map<String, dynamic>> getAiUploads(String token) async {
+    return _request('GET', '/admin/ai-uploads', token: token);
   }
 
   Future<Map<String, dynamic>> getSiteSettings() async {

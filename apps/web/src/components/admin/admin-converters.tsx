@@ -59,6 +59,38 @@ interface ConverterFormData {
   imageUrl: string;
 }
 
+// ---------------------------------------------------------------------------
+// ImageCell — safe replacement for innerHTML XSS pattern
+// ---------------------------------------------------------------------------
+
+const CDN_BASE = 'https://apg.fra1.cdn.digitaloceanspaces.com';
+const PLACEHOLDER = '/converter-placeholder.svg';
+
+function getConverterImageUrl(name: string) {
+  const cleanName = name.trim().split(' / ')[0].trim();
+  return `${CDN_BASE}/images/${encodeURIComponent(cleanName)}.png`;
+}
+
+function ImageCell({ src, alt }: { src?: string; alt: string }) {
+  // Use CDN URL from converter name (same pattern as catalogue cards)
+  const imgSrc = src && src.startsWith('http') ? src : getConverterImageUrl(alt);
+
+  const handleError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    (e.target as HTMLImageElement).src = PLACEHOLDER;
+  };
+
+  return (
+    <div className="h-8 w-8 rounded border border-border overflow-hidden bg-muted flex items-center justify-center">
+      <img
+        src={imgSrc}
+        alt={alt}
+        className="h-full w-full object-cover"
+        onError={handleError}
+      />
+    </div>
+  );
+}
+
 const emptyForm: ConverterFormData = {
   name: '',
   brand: '',
@@ -131,6 +163,11 @@ export function AdminConverters() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingConverter, setDeletingConverter] = useState<Converter | null>(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
+  // --- Image upload state ---
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // --- Import state ---
   const [importOpen, setImportOpen] = useState(false);
@@ -228,6 +265,23 @@ export function AdminConverters() {
 
   const handleFormChange = (field: keyof ConverterFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!token) return;
+    setImageUploading(true);
+    setImageUploadError(null);
+    try {
+      const res = await api.uploadConverterImage(file, token);
+      if (res.data?.url) {
+        setFormData((prev) => ({ ...prev, imageUrl: res.data.url }));
+      }
+    } catch (err: any) {
+      setImageUploadError(err?.message || 'Image upload failed. Check DO Spaces configuration.');
+    } finally {
+      setImageUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = '';
+    }
   };
 
   const handleFormSubmit = async (e: FormEvent) => {
@@ -516,24 +570,7 @@ export function AdminConverters() {
                     <tr key={c.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                       <td className="py-3 px-2 text-muted-foreground">{c.id}</td>
                       <td className="py-3 px-2">
-                        {c.imageUrl ? (
-                          <div className="h-8 w-8 rounded border border-border overflow-hidden bg-muted flex items-center justify-center">
-                            <img
-                              src={c.imageUrl.startsWith('http') ? c.imageUrl : `/media/catalog/product/${c.imageUrl}`}
-                              alt={c.name}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                (e.target as HTMLImageElement).parentElement!.innerHTML =
-                                  '<svg class="h-4 w-4 text-muted-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>';
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-8 w-8 rounded border border-border bg-muted flex items-center justify-center">
-                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                        )}
+                        <ImageCell src={c.imageUrl} alt={c.name} />
                       </td>
                       <td className="py-3 px-2 max-w-[200px] truncate font-medium">{c.name}</td>
                       <td className="py-3 px-2">
@@ -706,11 +743,47 @@ export function AdminConverters() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Image URL</label>
+              <label className="block text-sm font-medium text-foreground mb-1">Image</label>
+              {/* Image preview */}
+              {formData.imageUrl && (
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="h-16 w-16 rounded border border-border overflow-hidden bg-muted flex items-center justify-center">
+                    <ImageCell src={formData.imageUrl} alt="Preview" />
+                  </div>
+                  <span className="text-xs text-muted-foreground truncate max-w-[250px]">{formData.imageUrl}</span>
+                </div>
+              )}
+              {/* Upload button */}
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={imageUploading}
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1" />
+                  {imageUploading ? 'Uploading...' : 'Upload Image'}
+                </Button>
+                <span className="text-xs text-muted-foreground">or paste URL below</span>
+              </div>
+              {imageUploadError && (
+                <div className="text-xs text-destructive mb-2">{imageUploadError}</div>
+              )}
               <Input
                 value={formData.imageUrl}
                 onChange={(e) => handleFormChange('imageUrl', e.target.value)}
-                placeholder="Image path or URL"
+                placeholder="Image URL (CDN or external)"
                 className="bg-background"
               />
             </div>

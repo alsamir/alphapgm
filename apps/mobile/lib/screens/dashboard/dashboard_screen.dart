@@ -132,6 +132,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+
+                  // AI Queries info row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatCard(
+                          icon: Icons.visibility,
+                          label: 'Converter Views',
+                          value: '${_balance?['available'] ?? 0}',
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _StatCard(
+                          icon: Icons.psychology,
+                          label: 'AI Queries Left',
+                          value: '${(_balance?['available'] ?? 0) * 100 - (_balance?['aiQueryCounter'] ?? 0)}',
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
 
                   // Recent Searches

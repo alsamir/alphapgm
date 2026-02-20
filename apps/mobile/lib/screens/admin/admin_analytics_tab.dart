@@ -18,6 +18,8 @@ class _AdminAnalyticsTabState extends State<AdminAnalyticsTab> {
   List<dynamic> _topConverters = [];
   List<dynamic> _searchVolume = [];
   List<dynamic> _activeUsers = [];
+  List<dynamic> _countryData = [];
+  List<dynamic> _aiUploads = [];
   bool _loading = true;
 
   @override
@@ -36,12 +38,16 @@ class _AdminAnalyticsTabState extends State<AdminAnalyticsTab> {
         _api.getAdminTopConverters(token),
         _api.getAdminSearchVolume(token),
         _api.getAdminActiveUsers(token),
+        _api.getActivityByCountry(token),
+        _api.getAiUploads(token),
       ]);
 
       setState(() {
         _topConverters = results[0]['data'] as List? ?? [];
         _searchVolume = results[1]['data'] as List? ?? [];
         _activeUsers = results[2]['data'] as List? ?? [];
+        _countryData = results[3]['data'] as List? ?? [];
+        _aiUploads = results[4]['data'] as List? ?? [];
         _loading = false;
       });
     } catch (e) {
@@ -178,6 +184,108 @@ class _AdminAnalyticsTabState extends State<AdminAnalyticsTab> {
                     trailing: Text('${u['creditsUsed'] ?? 0} credits', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                 )),
+          const SizedBox(height: 20),
+
+          // Activity by Country
+          _SectionTitle(title: 'Activity by Country'),
+          const SizedBox(height: 8),
+          if (_countryData.isEmpty)
+            Card(child: Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('No data', style: TextStyle(color: AppTheme.textSecondary)))))
+          else
+            ..._countryData.take(15).map((c) => Card(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  child: ListTile(
+                    dense: true,
+                    leading: CircleAvatar(
+                      radius: 16,
+                      backgroundColor: AppTheme.primary.withValues(alpha: 0.2),
+                      child: Icon(Icons.public, color: AppTheme.primary, size: 16),
+                    ),
+                    title: Text(c['country'] ?? 'Unknown', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('${c['actionCount'] ?? 0} actions', style: TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.textSecondary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text('${c['uniqueUsers'] ?? 0} users', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
+          const SizedBox(height: 20),
+
+          // AI Image Uploads
+          _SectionTitle(title: 'AI Image Uploads'),
+          const SizedBox(height: 8),
+          if (_aiUploads.isEmpty)
+            Card(child: Padding(padding: const EdgeInsets.all(24), child: Center(child: Text('No data', style: TextStyle(color: AppTheme.textSecondary)))))
+          else
+            ..._aiUploads.take(15).map((u) {
+              final email = u['userEmail'] ?? u['email'] ?? 'Unknown';
+              final date = u['createdAt'] ?? u['date'] ?? '';
+              final identification = u['identification'] ?? u['identificationPreview'] ?? '';
+              final matchCount = u['matchCount'] ?? 0;
+
+              String formattedDate = date;
+              try {
+                final d = DateTime.parse(date);
+                formattedDate = '${d.day}/${d.month}/${d.year} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+              } catch (_) {}
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 6),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.camera_alt, color: AppTheme.primary, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(email, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text('$matchCount matches', style: TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                      ),
+                      if (identification.toString().isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          identification.toString(),
+                          style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      Text(formattedDate, style: TextStyle(fontSize: 11, color: AppTheme.textSecondary.withValues(alpha: 0.7))),
+                    ],
+                  ),
+                ),
+              );
+            }),
           const SizedBox(height: 40),
         ],
       ),

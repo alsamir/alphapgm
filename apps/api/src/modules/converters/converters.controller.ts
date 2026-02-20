@@ -6,6 +6,8 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ConvertersService } from './converters.service';
 import { PricingService } from '../pricing/pricing.service';
+import { CreateConverterDto } from './dto/create-converter.dto';
+import { UpdateConverterDto } from './dto/update-converter.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -67,6 +69,10 @@ export class ConvertersController {
         brandImage: converter.brandImage,
         keywords: converter.keywords,
         createdDate: converter.createdDate,
+        // Include metal presence booleans (no actual values)
+        hasPt: converter.pt != null && converter.pt !== '' && parseFloat(String(converter.pt)) > 0,
+        hasPd: converter.pd != null && converter.pd !== '' && parseFloat(String(converter.pd)) > 0,
+        hasRh: converter.rh != null && converter.rh !== '' && parseFloat(String(converter.rh)) > 0,
       },
     };
   }
@@ -110,7 +116,7 @@ export class ConvertersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ROLE_ADMIN', 'ROLE_MODERATOR')
   @ApiBearerAuth()
-  async create(@Body() body: any) {
+  async create(@Body() body: CreateConverterDto) {
     const converter = await this.convertersService.create(body);
     return { success: true, data: converter };
   }
@@ -119,7 +125,7 @@ export class ConvertersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ROLE_ADMIN', 'ROLE_MODERATOR')
   @ApiBearerAuth()
-  async update(@Param('id', ParseIntPipe) id: number, @Body() body: any) {
+  async update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateConverterDto) {
     const converter = await this.convertersService.update(id, body);
     return { success: true, data: converter };
   }

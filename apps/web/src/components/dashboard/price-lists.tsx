@@ -19,14 +19,18 @@ import {
   ChevronLeft,
   Package,
   X,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useCurrency } from '@/components/ui/currency-selector';
+import { CurrencySelector, useCurrency } from '@/components/ui/currency-selector';
 
 interface PriceListSummary {
   id: number;
   name: string;
   status: string;
+  isExpired?: boolean;
+  expiresAt?: string;
   itemCount: number;
   total: number;
   createdAt: string;
@@ -48,10 +52,21 @@ interface PriceListDetail {
   id: number;
   name: string;
   status: string;
+  isExpired?: boolean;
+  expiresAt?: string;
   items: PriceListItem[];
   total: number;
   createdAt: string;
   updatedAt: string;
+}
+
+function getTimeRemaining(expiresAt: string): string {
+  const diff = new Date(expiresAt).getTime() - Date.now();
+  if (diff <= 0) return '';
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (days > 0) return `${days}d ${hours}h`;
+  return `${hours}h`;
 }
 
 export function PriceLists() {
@@ -198,7 +213,10 @@ export function PriceLists() {
       {!selectedList && (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">{t('priceLists')}</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold">{t('priceLists')}</h2>
+              <CurrencySelector />
+            </div>
             {lists.length === 0 && (
               <Button
                 size="sm"
@@ -260,9 +278,19 @@ export function PriceLists() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        {list.status}
-                      </Badge>
+                      {list.isExpired ? (
+                        <Badge variant="destructive" className="text-[10px]">
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          {t('expired')}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px]">
+                          {list.expiresAt && (
+                            <Clock className="h-3 w-3 mr-1" />
+                          )}
+                          {list.expiresAt ? getTimeRemaining(list.expiresAt) : list.status}
+                        </Badge>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -304,11 +332,27 @@ export function PriceLists() {
                 </p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-1.5" />
-              {t('exportPdf')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <CurrencySelector />
+              <Button variant="outline" size="sm" onClick={handleExport}>
+                <Download className="h-4 w-4 mr-1.5" />
+                {t('exportPdf')}
+              </Button>
+            </div>
           </div>
+
+          {selectedList.isExpired && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
+              <span>{t('priceListExpired')}</span>
+            </div>
+          )}
+          {!selectedList.isExpired && selectedList.expiresAt && (
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-500 flex-shrink-0" />
+              <span>{t('priceListExpires')} {getTimeRemaining(selectedList.expiresAt)}</span>
+            </div>
+          )}
 
           {detailLoading ? (
             <div className="space-y-3">

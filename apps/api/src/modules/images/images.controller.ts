@@ -11,7 +11,6 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Images')
-@SkipThrottle()
 @Controller('images')
 export class ImagesController {
   constructor(private imagesService: ImagesService) {}
@@ -35,6 +34,7 @@ export class ImagesController {
   }
 
   // Authenticated image - watermarked with user email
+  @SkipThrottle()
   @Get(':converterId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -54,6 +54,7 @@ export class ImagesController {
     }
   }
 
+  @SkipThrottle()
   @Post('upload')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ROLE_ADMIN')

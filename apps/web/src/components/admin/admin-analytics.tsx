@@ -17,7 +17,7 @@ import {
   AreaChart,
   Area,
 } from 'recharts';
-import { TrendingUp, Search, Users, Eye } from 'lucide-react';
+import { TrendingUp, Search, Users, Eye, Globe, Camera, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 const COLORS = {
@@ -46,16 +46,22 @@ export function AdminAnalytics() {
   const [topConverters, setTopConverters] = useState<any[]>([]);
   const [searchVolume, setSearchVolume] = useState<any[]>([]);
   const [activeUsers, setActiveUsers] = useState<any[]>([]);
+  const [countryData, setCountryData] = useState<any[]>([]);
+  const [userLocations, setUserLocations] = useState<any[]>([]);
+  const [aiUploads, setAiUploads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
     const fetchAll = async () => {
       try {
-        const [tcRes, svRes, auRes] = await Promise.all([
+        const [tcRes, svRes, auRes, cdRes, ulRes, aiRes] = await Promise.all([
           api.getAdminTopConverters(token),
           api.getAdminSearchVolume(token),
           api.getAdminActiveUsers(token),
+          api.adminRequest('/admin/analytics/activity-by-country', token),
+          api.adminRequest('/admin/analytics/user-locations', token),
+          api.adminRequest('/admin/ai-uploads', token),
         ]);
         setTopConverters(tcRes.data || []);
         setSearchVolume((svRes.data || []).map((d: any) => ({
@@ -63,6 +69,9 @@ export function AdminAnalytics() {
           date: new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         })));
         setActiveUsers(auRes.data || []);
+        setCountryData(cdRes.data || []);
+        setUserLocations(ulRes.data || []);
+        setAiUploads((aiRes.data?.data) || []);
       } catch (err) {
         console.error('Failed to fetch analytics:', err);
       } finally {
@@ -230,6 +239,133 @@ export function AdminAnalytics() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Activity by Country + User Locations */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Globe className="h-4 w-4 text-primary" />
+              Activity by Country
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {countryData.length > 0 ? (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {countryData.map((entry: any) => (
+                  <div key={entry.country} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getFlagEmoji(entry.country)}</span>
+                      <span className="text-sm font-medium">{entry.country}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="text-[10px]">
+                        {entry.count} actions
+                      </Badge>
+                      <Badge variant="outline" className="text-[10px]">
+                        {entry.uniqueUsers} users
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
+                No country data yet (requires real traffic)
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              User Locations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {userLocations.length > 0 ? (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {userLocations.map((u: any) => (
+                  <div key={u.userId} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-secondary/30 transition-colors">
+                    <div className="min-w-0">
+                      <div className="text-sm truncate">{u.email}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {u.city ? `${u.city}, ` : ''}{u.country || 'Unknown'}
+                      </div>
+                    </div>
+                    {u.lastAccess && (
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                        {new Date(u.lastAccess).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-[200px] text-sm text-muted-foreground">
+                No location data yet
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* AI Image Uploads */}
+      {aiUploads.length > 0 && (
+        <Card className="bg-card border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Camera className="h-4 w-4 text-primary" />
+              AI Image Uploads ({aiUploads.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {aiUploads.map((upload: any) => (
+                <div key={upload.id} className="flex gap-3 p-3 rounded-lg border border-border/50 hover:bg-secondary/20 transition-colors">
+                  <img
+                    src={`/api/v1/uploads/${upload.imagePath}`}
+                    alt="Upload"
+                    className="h-16 w-16 rounded-md object-cover bg-muted flex-shrink-0"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/converter-placeholder.svg'; }}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium truncate">{upload.email}</span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
+                        {new Date(upload.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    {upload.result?.identification && (
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {upload.result.identification.substring(0, 150)}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      {upload.ipAddress && (
+                        <Badge variant="outline" className="text-[10px]">{upload.ipAddress}</Badge>
+                      )}
+                      {upload.result?.matchCount > 0 && (
+                        <Badge variant="secondary" className="text-[10px]">{upload.result.matchCount} matches</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
+}
+
+function getFlagEmoji(countryCode: string): string {
+  if (!countryCode || countryCode.length !== 2) return '';
+  const codePoints = countryCode.toUpperCase().split('').map(
+    (char) => 127397 + char.charCodeAt(0)
+  );
+  return String.fromCodePoint(...codePoints);
 }

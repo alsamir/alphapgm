@@ -123,6 +123,9 @@ model User {
   statusId          Int?      @map("status_id")
   emailVerified     Boolean   @default(false) @map("email_verified")
   verificationToken String?   @map("verification_token") @db.VarChar(255)
+  lastIp            String?   @map("last_ip") @db.VarChar(45)
+  lastCountry       String?   @map("last_country") @db.VarChar(2)
+  lastCity          String?   @map("last_city") @db.VarChar(100)
 
   status       LkStatus?      @relation(fields: [statusId], references: [statusId])
   roles        UserRole[]
@@ -131,7 +134,11 @@ model User {
   creditBalance CreditBalance?
   creditLedger  CreditLedger[]
   aiChats       AiChat[]
+  aiImageUploads AiImageUpload[]
+  activities    UserActivity[]
   priceLists    PriceList[]
+  groupMemberships UserGroupMember[]
+  sentMessages  AdminMessage[] @relation("sentMessages")
 
   @@index([statusId], map: "FKnvs5s81l4sfm21yr9boop0hn5")
   @@map("user")
@@ -210,6 +217,7 @@ model CreditBalance {
   available      Int      @default(0)
   lifetimeEarned Int      @default(0) @map("lifetime_earned")
   lifetimeSpent  Int      @default(0) @map("lifetime_spent")
+  aiQueryCounter Int      @default(0) @map("ai_query_counter")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [userId])
@@ -228,6 +236,37 @@ model AiChat {
 
   @@index([userId])
   @@map("ai_chats")
+}
+
+model AiImageUpload {
+  id          Int      @id @default(autoincrement())
+  userId      BigInt   @map("user_id")
+  imagePath   String   @map("image_path") @db.VarChar(500)
+  result      Json?
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@map("ai_image_uploads")
+}
+
+model UserActivity {
+  id        Int      @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  action    String   @db.VarChar(50)
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  country   String?  @db.VarChar(2)
+  city      String?  @db.VarChar(100)
+  userAgent String?  @map("user_agent") @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [userId])
+
+  @@index([userId, createdAt])
+  @@index([country])
+  @@map("user_activity")
 }
 
 model PriceList {
@@ -258,6 +297,49 @@ model PriceListItem {
 
   @@index([priceListId])
   @@map("price_list_items")
+}
+
+model UserGroup {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  color       String?  @db.VarChar(20)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  members UserGroupMember[]
+
+  @@map("user_groups")
+}
+
+model UserGroupMember {
+  groupId Int    @map("group_id")
+  userId  BigInt @map("user_id")
+  addedAt DateTime @default(now()) @map("added_at")
+
+  group UserGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@map("user_group_members")
+}
+
+model AdminMessage {
+  id             Int      @id @default(autoincrement())
+  subject        String   @db.VarChar(255)
+  body           String   @db.Text
+  channel        String   @default("email") @db.VarChar(20)
+  targetType     String   @map("target_type") @db.VarChar(20)
+  targetId       Int?     @map("target_id")
+  sentBy         BigInt   @map("sent_by")
+  sentAt         DateTime @default(now()) @map("sent_at")
+  status         String   @default("sent") @db.VarChar(20)
+  recipientCount Int      @default(0) @map("recipient_count")
+
+  sender User @relation("sentMessages", fields: [sentBy], references: [userId])
+
+  @@index([sentAt])
+  @@map("admin_messages")
 }
 
 model SiteSetting {

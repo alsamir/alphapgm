@@ -22,13 +22,14 @@ export class CreditsService {
   async getBalance(userId: bigint) {
     const balance = await this.prisma.creditBalance.findUnique({ where: { userId } });
     if (!balance) {
-      return { userId: Number(userId), available: 0, lifetimeEarned: 0, lifetimeSpent: 0 };
+      return { userId: Number(userId), available: 0, lifetimeEarned: 0, lifetimeSpent: 0, aiQueryCounter: 0 };
     }
     return {
       userId: Number(balance.userId),
       available: balance.available,
       lifetimeEarned: balance.lifetimeEarned,
       lifetimeSpent: balance.lifetimeSpent,
+      aiQueryCounter: balance.aiQueryCounter,
     };
   }
 
@@ -58,6 +59,67 @@ export class CreditsService {
       limit,
       hasMore,
     };
+  }
+
+  /**
+   * Record an AI query. Increments counter; every 100 queries deducts 1 credit.
+   * Returns { queriesUsed, queriesRemaining, creditDeducted, creditsRemaining }
+   */
+  async recordAiQuery(userId: bigint, cost: number = 1) {
+    const balance = await this.prisma.creditBalance.findUnique({ where: { userId } });
+    if (!balance || balance.available < 1) {
+      throw new ForbiddenException('Insufficient credits for AI queries');
+    }
+
+    const newCounter = balance.aiQueryCounter + cost;
+    const creditsToDeduct = Math.floor(newCounter / CREDITS.AI_QUERIES_PER_CREDIT);
+    const remainingCounter = newCounter % CREDITS.AI_QUERIES_PER_CREDIT;
+
+    if (creditsToDeduct > 0) {
+      if (balance.available < creditsToDeduct) {
+        throw new ForbiddenException('Insufficient credits for AI queries');
+      }
+      const newBalance = balance.available - creditsToDeduct;
+      await this.prisma.$transaction([
+        this.prisma.creditBalance.update({
+          where: { userId },
+          data: {
+            aiQueryCounter: remainingCounter,
+            available: { decrement: creditsToDeduct },
+            lifetimeSpent: { increment: creditsToDeduct },
+          },
+        }),
+        this.prisma.creditLedger.create({
+          data: {
+            userId,
+            amount: -creditsToDeduct,
+            balanceAfter: newBalance,
+            type: 'CONSUMPTION',
+            sourceDetail: `AI queries (${creditsToDeduct * CREDITS.AI_QUERIES_PER_CREDIT} queries batch)`,
+          },
+        }),
+      ]);
+      return {
+        queriesUsed: cost,
+        queriesRemaining: (balance.available - creditsToDeduct) * CREDITS.AI_QUERIES_PER_CREDIT + (CREDITS.AI_QUERIES_PER_CREDIT - remainingCounter),
+        creditDeducted: creditsToDeduct,
+        creditsRemaining: newBalance,
+        aiQueryCounter: remainingCounter,
+      };
+    } else {
+      // Just increment counter, no credit deduction yet
+      await this.prisma.creditBalance.update({
+        where: { userId },
+        data: { aiQueryCounter: newCounter },
+      });
+      return {
+        queriesUsed: cost,
+        queriesRemaining: (balance.available - 1) * CREDITS.AI_QUERIES_PER_CREDIT + (CREDITS.AI_QUERIES_PER_CREDIT - newCounter),
+        creditDeducted: 0,
+        creditsRemaining: balance.available,
+        aiQueryCounter: newCounter,
+      };
+    }
   }
 
   async deductCredits(userId: bigint, amount: number, source: string) {

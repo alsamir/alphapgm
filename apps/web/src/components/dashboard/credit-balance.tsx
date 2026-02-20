@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Coins, Plus, ArrowDown, ArrowUp, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Coins, Plus, ArrowDown, ArrowUp, ShoppingCart, ChevronLeft, ChevronRight, Bot, Eye } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export function CreditBalance() {
@@ -71,12 +71,15 @@ export function CreditBalance() {
   const available = balance?.available ?? 0;
   const lifetimeEarned = balance?.lifetimeEarned ?? 0;
   const lifetimeSpent = balance?.lifetimeSpent ?? 0;
+  const aiQueryCounter = balance?.aiQueryCounter ?? 0;
+  const aiQueriesPerCredit = 100;
+  const aiQueriesRemaining = available > 0 ? (available - 1) * aiQueriesPerCredit + (aiQueriesPerCredit - aiQueryCounter) : 0;
   const usagePercent = lifetimeEarned > 0 ? Math.min(100, Math.round((lifetimeSpent / lifetimeEarned) * 100)) : 0;
 
   return (
     <div className="space-y-6">
       {/* Balance Cards */}
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="bg-card border-primary/30">
           <CardContent className="p-6 text-center">
             <Coins className="h-8 w-8 text-primary mx-auto mb-2" />
@@ -86,8 +89,23 @@ export function CreditBalance() {
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-6 text-center">
-            <div className="text-2xl font-bold text-foreground">{lifetimeEarned}</div>
-            <div className="text-sm text-muted-foreground mt-1">{t('lifetimeEarned')}</div>
+            <Eye className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+            <div className="text-2xl font-bold text-foreground">{available}</div>
+            <div className="text-sm text-muted-foreground mt-1">{t('converterViews')}</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="p-6 text-center">
+            <Bot className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+            <div className="text-2xl font-bold text-foreground">{aiQueriesRemaining}</div>
+            <div className="text-sm text-muted-foreground mt-1">{t('aiQueriesLeft')}</div>
+            <div className="w-full h-1.5 bg-secondary rounded-full mt-2 overflow-hidden">
+              <div
+                className="h-full bg-blue-500 rounded-full transition-all"
+                style={{ width: `${(aiQueryCounter / aiQueriesPerCredit) * 100}%` }}
+              />
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">{aiQueryCounter}/100 {t('inCurrentCredit')}</div>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -96,6 +114,11 @@ export function CreditBalance() {
             <div className="text-sm text-muted-foreground mt-1">{t('lifetimeSpent')}</div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Credit Explanation */}
+      <div className="text-center text-sm text-muted-foreground bg-secondary/30 rounded-lg py-2 px-4">
+        {t('creditExplanation')}
       </div>
 
       {/* Visual Usage Bar */}

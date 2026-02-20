@@ -10,6 +10,18 @@ export class PriceListsService {
     private pricingService: PricingService,
   ) {}
 
+  private static readonly EXPIRY_DAYS = 7;
+
+  private isExpired(list: { updatedAt: Date }): boolean {
+    const expiryMs = PriceListsService.EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    return Date.now() - list.updatedAt.getTime() > expiryMs;
+  }
+
+  private getExpiresAt(list: { updatedAt: Date }): string {
+    const expiryMs = PriceListsService.EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+    return new Date(list.updatedAt.getTime() + expiryMs).toISOString();
+  }
+
   async listByUser(userId: bigint) {
     const lists = await this.prisma.priceList.findMany({
       where: { userId },
@@ -22,7 +34,9 @@ export class PriceListsService {
     return lists.map((list) => ({
       id: list.id,
       name: list.name,
-      status: list.status,
+      status: this.isExpired(list) ? 'expired' : list.status,
+      isExpired: this.isExpired(list),
+      expiresAt: this.getExpiresAt(list),
       itemCount: list.items.length,
       total: list.items.reduce((sum, item) => sum + (item.totalPrice || 0), 0),
       createdAt: list.createdAt.toISOString(),
@@ -69,7 +83,9 @@ export class PriceListsService {
     return {
       id: list.id,
       name: list.name,
-      status: list.status,
+      status: this.isExpired(list) ? 'expired' : list.status,
+      isExpired: this.isExpired(list),
+      expiresAt: this.getExpiresAt(list),
       items,
       total: items.reduce((sum, item) => sum + (item.totalPrice || 0), 0),
       createdAt: list.createdAt.toISOString(),

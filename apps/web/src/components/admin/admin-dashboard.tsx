@@ -12,6 +12,8 @@ import { AdminPricing } from './admin-pricing';
 import { AdminCredits } from './admin-credits';
 import { AdminAnalytics } from './admin-analytics';
 import { AdminSettings } from './admin-settings';
+import { AdminGroups } from './admin-groups';
+import { AdminMessages } from './admin-messages';
 import {
   Users,
   Package,
@@ -28,6 +30,8 @@ import {
   Coins,
   Settings,
   BarChart3,
+  UsersRound,
+  MessageSquare,
 } from 'lucide-react';
 import {
   LineChart,
@@ -47,7 +51,7 @@ import {
   AreaChart,
 } from 'recharts';
 
-type AdminTab = 'overview' | 'converters' | 'users' | 'pricing' | 'credits' | 'analytics' | 'settings';
+type AdminTab = 'overview' | 'converters' | 'users' | 'groups' | 'pricing' | 'credits' | 'analytics' | 'messages' | 'settings';
 
 // Theme colors
 const COLORS = {
@@ -212,9 +216,11 @@ export function AdminDashboard() {
     { id: 'overview' as AdminTab, label: 'Overview', icon: LayoutDashboard },
     { id: 'converters' as AdminTab, label: 'Converters', icon: Package },
     { id: 'users' as AdminTab, label: 'Users', icon: Users },
+    { id: 'groups' as AdminTab, label: 'Groups', icon: UsersRound },
     { id: 'pricing' as AdminTab, label: 'Pricing', icon: CircleDollarSign },
     { id: 'credits' as AdminTab, label: 'Credits', icon: Coins },
     { id: 'analytics' as AdminTab, label: 'Analytics', icon: BarChart3 },
+    { id: 'messages' as AdminTab, label: 'Messages', icon: MessageSquare },
     { id: 'settings' as AdminTab, label: 'Settings', icon: Settings },
   ];
 
@@ -545,9 +551,11 @@ export function AdminDashboard() {
 
       {activeTab === 'converters' && <AdminConverters />}
       {activeTab === 'users' && <AdminUsers />}
+      {activeTab === 'groups' && <AdminGroups />}
       {activeTab === 'pricing' && <AdminPricing />}
       {activeTab === 'credits' && <AdminCredits />}
       {activeTab === 'analytics' && <AdminAnalytics />}
+      {activeTab === 'messages' && <AdminMessages />}
       {activeTab === 'settings' && <AdminSettings />}
     </div>
   );

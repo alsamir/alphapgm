@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -15,6 +15,7 @@ import { UsersModule } from './modules/users/users.module';
 import { PriceListsModule } from './modules/pricelists/pricelists.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { RedisModule } from './common/redis/redis.module';
+import { CreditInterceptor } from './common/interceptors/credit.interceptor';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -23,6 +24,10 @@ import { HealthController } from './health.controller';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: CreditInterceptor,
     },
   ],
   imports: [

@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CREDITS } from '@catapp/shared-utils';
+const geoip = require('geoip-lite');
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,11 @@ export class AuthService {
   async verifyTurnstileToken(token: string): Promise<boolean> {
     const secret = this.configService.get<string>('TURNSTILE_SECRET_KEY');
     if (!secret || secret === 'placeholder') {
-      this.logger.warn('Turnstile secret not configured, skipping verification');
+      if (process.env.NODE_ENV === 'production') {
+        this.logger.error('Turnstile secret not configured in production — blocking request');
+        return false;
+      }
+      this.logger.warn('Turnstile secret not configured, skipping verification (dev only)');
       return true;
     }
 
@@ -137,7 +142,7 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string, turnstileToken?: string) {
+  async login(email: string, password: string, turnstileToken?: string, ipAddress?: string, userAgent?: string) {
     if (turnstileToken) {
       const valid = await this.verifyTurnstileToken(turnstileToken);
       if (!valid) throw new BadRequestException('Bot verification failed');
@@ -161,11 +166,32 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Update last access
+    // Update last access + IP geolocation
+    const geo = ipAddress ? geoip.lookup(ipAddress) : null;
+    const country = geo?.country || null;
+    const city = geo?.city || null;
+
     await this.prisma.user.update({
       where: { userId: user.userId },
-      data: { lastAccess: new Date() },
+      data: {
+        lastAccess: new Date(),
+        lastIp: ipAddress || null,
+        lastCountry: country,
+        lastCity: city,
+      },
     });
+
+    // Record activity for analytics
+    await this.prisma.userActivity.create({
+      data: {
+        userId: user.userId,
+        action: 'login',
+        ipAddress: ipAddress || null,
+        country,
+        city,
+        userAgent: userAgent?.substring(0, 500) || null,
+      },
+    }).catch(() => {}); // Non-critical
 
     const roles = user.roles.map((ur) => ur.role.name!);
     const planSlug = user.subscription?.plan?.slug || 'free';

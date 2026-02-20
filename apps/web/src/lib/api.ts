@@ -206,12 +206,28 @@ class ApiClient {
   }
 
   // AI
-  async sendAiMessage(message: string, chatId: number | undefined, token: string) {
+  async sendAiMessage(message: string, chatId: number | undefined, token: string, locale?: string) {
     return this.request<any>('/ai/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, chatId }),
+      body: JSON.stringify({ message, chatId, locale }),
       token,
     });
+  }
+
+  async identifyConverterByImage(file: File, message: string | undefined, token: string, locale?: string) {
+    const formData = new FormData();
+    formData.append('image', file);
+    if (message) formData.append('message', message);
+    if (locale) formData.append('locale', locale);
+
+    const res = await fetch(`${this.baseUrl}/api/v1/ai/identify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || data.error || 'Image identification failed');
+    return data as ApiResponse<any>;
   }
 
   async getAiHistory(token: string) {
@@ -401,6 +417,10 @@ class ApiClient {
     return this.request<any[]>(`/admin/analytics/active-users${query}`, { token });
   }
 
+  async adminRequest(endpoint: string, token: string) {
+    return this.request<any>(endpoint, { token });
+  }
+
   // Email verification
   async verifyEmail(verificationToken: string) {
     return this.request<any>(`/auth/verify-email?token=${encodeURIComponent(verificationToken)}`);
@@ -442,6 +462,116 @@ class ApiClient {
       method: 'POST',
       token,
     });
+  }
+
+  // Admin - User CRUD
+  async createAdminUser(data: any, token: string) {
+    return this.request<any>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async updateAdminUser(userId: number, data: any, token: string) {
+    return this.request<any>(`/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async deleteAdminUser(userId: number, token: string) {
+    return this.request<any>(`/admin/users/${userId}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  // Admin - Groups
+  async getGroups(token: string) {
+    return this.request<any[]>('/admin/groups', { token });
+  }
+
+  async createGroup(data: { name: string; description?: string; color?: string }, token: string) {
+    return this.request<any>('/admin/groups', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async updateGroup(id: number, data: { name?: string; description?: string; color?: string }, token: string) {
+    return this.request<any>(`/admin/groups/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async deleteGroup(id: number, token: string) {
+    return this.request<any>(`/admin/groups/${id}`, {
+      method: 'DELETE',
+      token,
+    });
+  }
+
+  async addGroupMembers(groupId: number, userIds: number[], token: string) {
+    return this.request<any>(`/admin/groups/${groupId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ userIds }),
+      token,
+    });
+  }
+
+  async removeGroupMembers(groupId: number, userIds: number[], token: string) {
+    return this.request<any>(`/admin/groups/${groupId}/members`, {
+      method: 'DELETE',
+      body: JSON.stringify({ userIds }),
+      token,
+    });
+  }
+
+  async getGroupMembers(groupId: number, token: string) {
+    return this.request<any[]>(`/admin/groups/${groupId}/members`, { token });
+  }
+
+  // Admin - Messages
+  async sendAdminMessage(data: any, token: string) {
+    return this.request<any>('/admin/messages/send', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      token,
+    });
+  }
+
+  async getAdminMessages(params: Record<string, any>, token: string) {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query.set(key, String(value));
+      }
+    });
+    return this.request<any>(`/admin/messages?${query.toString()}`, { token });
+  }
+
+  async getAdminMessage(id: number, token: string) {
+    return this.request<any>(`/admin/messages/${id}`, { token });
+  }
+
+  // Admin - Upload converter image
+  async uploadConverterImage(file: File, token: string) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch(`${this.baseUrl}/api/v1/images/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData,
+      credentials: 'include',
+    });
+    const data = await response.json();
+    if (!response.ok) throw new ApiError(data.message || 'Upload failed', response.status, data);
+    return data as { success: boolean; data: { url: string } };
   }
 
   // Image suggestions (user)

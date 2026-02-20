@@ -38,8 +38,11 @@ export class AuthController {
   async login(
     @Body() body: { email: string; password: string; turnstileToken?: string },
     @Res({ passthrough: true }) res: Response,
+    @Req() req: Request,
   ) {
-    const result = await this.authService.login(body.email, body.password, body.turnstileToken);
+    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || '';
+    const userAgent = req.headers['user-agent'] || '';
+    const result = await this.authService.login(body.email, body.password, body.turnstileToken, ip, userAgent);
     this.setRefreshTokenCookie(res, result.tokens.refreshToken);
     return {
       success: true,

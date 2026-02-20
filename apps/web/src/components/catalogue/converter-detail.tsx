@@ -10,9 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Coins, CheckCircle, ArrowRight, Plus, Check, Camera, Upload } from 'lucide-react';
+import { ArrowLeft, Lock, Coins, CheckCircle, Plus, Check, Loader2, Unlock, Clock } from 'lucide-react';
 import { CurrencySelector, useCurrency } from '@/components/ui/currency-selector';
-import { AuthenticatedImage } from '@/components/ui/authenticated-image';
 
 interface Props {
   converterId: number;
@@ -37,8 +36,13 @@ export function ConverterDetail({ converterId }: Props) {
   const { token, isAuthenticated } = useAuth();
   const t = useTranslations('converter');
   const { format: formatPrice } = useCurrency();
-  const [converter, setConverter] = useState<any>(null);
+
+  // Preview data (free, always loaded first)
+  const [preview, setPreview] = useState<any>(null);
+  // Full pricing data (loaded only after user confirms)
+  const [pricingData, setPricingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [relatedConverters, setRelatedConverters] = useState<RelatedConverter[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
@@ -48,32 +52,23 @@ export function ConverterDetail({ converterId }: Props) {
   const [addedToList, setAddedToList] = useState(false);
   const [addingToList, setAddingToList] = useState(false);
 
-  // Image suggestion state
-  const [imageError, setImageError] = useState(false);
-  const [suggestingImage, setSuggestingImage] = useState(false);
-  const [imageSuggested, setImageSuggested] = useState(false);
-
+  // Always load preview first (free, no credit cost)
   useEffect(() => {
-    const fetchConverter = async () => {
+    const fetchPreview = async () => {
       setLoading(true);
       setError(null);
+      setPricingData(null);
       try {
-        if (isAuthenticated && token) {
-          const res = await api.getConverter(converterId, token);
-          setConverter(res.data);
-        } else {
-          // Fetch basic preview info without auth (no pricing data)
-          const res = await api.getConverterPreview(converterId);
-          setConverter(res.data || null);
-        }
+        const res = await api.getConverterPreview(converterId);
+        setPreview(res.data || null);
       } catch (err: any) {
         setError(err.message || 'Failed to load converter');
       } finally {
         setLoading(false);
       }
     };
-    fetchConverter();
-  }, [converterId, token, isAuthenticated]);
+    fetchPreview();
+  }, [converterId]);
 
   // Fetch user's price lists
   useEffect(() => {
@@ -88,6 +83,26 @@ export function ConverterDetail({ converterId }: Props) {
     };
     fetchLists();
   }, [token, isAuthenticated]);
+
+  // Whether this is a free re-view from 7-day history
+  const [fromHistory, setFromHistory] = useState(false);
+
+  // Unlock pricing (spends 1 credit, or free if viewed within 7 days)
+  const handleUnlockPricing = async () => {
+    if (!token || unlocking) return;
+    setUnlocking(true);
+    try {
+      const res = await api.getConverter(converterId, token);
+      setPricingData(res.data);
+      if (res.fromHistory) {
+        setFromHistory(true);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to unlock pricing');
+    } finally {
+      setUnlocking(false);
+    }
+  };
 
   const handleAddToPriceList = async () => {
     if (!token || addingToList) return;
@@ -110,39 +125,18 @@ export function ConverterDetail({ converterId }: Props) {
     }
   };
 
-  const handleSuggestImage = async () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file || !token) return;
-      setSuggestingImage(true);
-      try {
-        await api.suggestImage(converterId, file, token);
-        setImageSuggested(true);
-      } catch (err) {
-        console.error('Failed to suggest image:', err);
-      } finally {
-        setSuggestingImage(false);
-      }
-    };
-    input.click();
-  };
-
   // Fetch related converters when we have a brand
   useEffect(() => {
-    if (!converter?.brand) return;
+    if (!preview?.brand) return;
 
     const fetchRelated = async () => {
       setRelatedLoading(true);
       try {
         const res = await api.searchConverters({
-          brand: converter.brand,
+          brand: preview.brand,
           limit: 5,
         });
         if (res.data?.data) {
-          // Filter out the current converter and take up to 4
           const related = res.data.data
             .filter((c: any) => c.id !== converterId)
             .slice(0, 4);
@@ -155,7 +149,7 @@ export function ConverterDetail({ converterId }: Props) {
       }
     };
     fetchRelated();
-  }, [converter?.brand, converterId]);
+  }, [preview?.brand, converterId]);
 
   if (loading) {
     return (
@@ -174,7 +168,7 @@ export function ConverterDetail({ converterId }: Props) {
     );
   }
 
-  if (error || !converter) {
+  if (error || !preview) {
     return (
       <div className="text-center py-16">
         <p className="text-muted-foreground text-lg">{error || t('notFound')}</p>
@@ -188,11 +182,16 @@ export function ConverterDetail({ converterId }: Props) {
     );
   }
 
-  // API returns hasPt/hasPd/hasRh booleans — never raw content values
-  const hasPt = isMetalPresent(converter.hasPt);
-  const hasPd = isMetalPresent(converter.hasPd);
-  const hasRh = isMetalPresent(converter.hasRh);
+  // Use the converter data source: pricing data if unlocked, preview otherwise
+  const converter = preview;
+
+  // Metal presence from preview (free) or pricing data
+  const hasPt = isMetalPresent(pricingData?.hasPt ?? preview.hasPt);
+  const hasPd = isMetalPresent(pricingData?.hasPd ?? preview.hasPd);
+  const hasRh = isMetalPresent(pricingData?.hasRh ?? preview.hasRh);
   const hasAnyMetal = hasPt || hasPd || hasRh;
+
+  const pricingUnlocked = pricingData != null;
 
   return (
     <div>
@@ -213,7 +212,6 @@ export function ConverterDetail({ converterId }: Props) {
             className="h-full w-full object-contain"
             onError={(e) => { (e.target as HTMLImageElement).src = '/converter-placeholder.svg'; }}
           />
-          {/* Brand logo overlay */}
           {converter.brandImage && (
             <div className="absolute bottom-3 right-3 h-10 w-10 rounded-lg bg-background/80 backdrop-blur-sm p-1 border border-border/50">
               <img
@@ -258,56 +256,52 @@ export function ConverterDetail({ converterId }: Props) {
             </div>
           )}
 
-          <Separator />
-
-          {/* Pricing / Metal Content Section */}
-          {isAuthenticated && converter.hasPt !== undefined ? (
-            <div className="space-y-4">
-              {/* Credit usage indicator */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <span>{t('creditUsed')}</span>
-              </div>
-
-              {/* Metal Presence Indicators */}
-              {hasAnyMetal && (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">{t('contains')}</span>
-                  {hasPt && (
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="inline-block h-3 w-3 rounded-full"
-                        style={{ backgroundColor: '#E5E4E2' }}
-                        title="Platinum"
-                      />
-                      <span className="text-xs text-muted-foreground">Pt</span>
-                    </div>
-                  )}
-                  {hasPd && (
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="inline-block h-3 w-3 rounded-full"
-                        style={{ backgroundColor: '#CFB53B' }}
-                        title="Palladium"
-                      />
-                      <span className="text-xs text-muted-foreground">Pd</span>
-                    </div>
-                  )}
-                  {hasRh && (
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="inline-block h-3 w-3 rounded-full"
-                        style={{ backgroundColor: '#4A90D9' }}
-                        title="Rhodium"
-                      />
-                      <span className="text-xs text-muted-foreground">Rh</span>
-                    </div>
-                  )}
+          {/* Metal Presence Indicators (free, from preview) */}
+          {hasAnyMetal && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">{t('contains')}</span>
+              {hasPt && (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: '#E5E4E2' }} title="Platinum" />
+                  <span className="text-xs text-muted-foreground">Pt</span>
                 </div>
               )}
+              {hasPd && (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: '#CFB53B' }} title="Palladium" />
+                  <span className="text-xs text-muted-foreground">Pd</span>
+                </div>
+              )}
+              {hasRh && (
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: '#4A90D9' }} title="Rhodium" />
+                  <span className="text-xs text-muted-foreground">Rh</span>
+                </div>
+              )}
+            </div>
+          )}
 
-              {/* Estimated Value Card */}
-              {converter.calculatedPrice != null && (
+          <Separator />
+
+          {/* Pricing Section */}
+          {isAuthenticated && pricingUnlocked ? (
+            /* Pricing unlocked - show full data */
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                {fromHistory ? (
+                  <>
+                    <Clock className="h-4 w-4 text-blue-500" />
+                    <span>{t('freeReview')}</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>{t('creditUsed')}</span>
+                  </>
+                )}
+              </div>
+
+              {pricingData.calculatedPrice != null && (
                 <Card className="border-primary/30">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
@@ -321,7 +315,7 @@ export function ConverterDetail({ converterId }: Props) {
                   <CardContent>
                     <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
                       <div className="text-3xl font-bold text-primary">
-                        {formatPrice(Number(converter.calculatedPrice))}
+                        {formatPrice(Number(pricingData.calculatedPrice))}
                       </div>
                       <div className="text-sm text-muted-foreground mt-2">
                         {t('basedOnCurrentPrices')}
@@ -362,11 +356,32 @@ export function ConverterDetail({ converterId }: Props) {
                 )}
               </div>
             </div>
+          ) : isAuthenticated ? (
+            /* Authenticated but pricing not yet unlocked - show unlock button */
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="p-6 text-center">
+                <Coins className="h-10 w-10 text-primary mx-auto mb-3" />
+                <h3 className="font-semibold text-lg mb-1">{t('unlockPricing')}</h3>
+                <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
+                  {t('unlockPricingDesc')}
+                </p>
+                <Button
+                  onClick={handleUnlockPricing}
+                  disabled={unlocking}
+                  className="px-6"
+                >
+                  {unlocking ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('unlocking')}</>
+                  ) : (
+                    <><Unlock className="h-4 w-4 mr-2" />{t('unlockForOneCredit')}</>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
           ) : (
-            /* Unauthenticated: blurred/locked pricing section */
+            /* Unauthenticated: locked pricing section */
             <Card className="border-border relative overflow-hidden">
               <CardContent className="p-6">
-                {/* Blurred background to hint at hidden data */}
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="grid grid-cols-3 gap-4 p-6 pt-12 opacity-[0.06]">
                     <div className="text-center p-3 rounded-lg bg-foreground">
@@ -383,7 +398,6 @@ export function ConverterDetail({ converterId }: Props) {
                     </div>
                   </div>
                 </div>
-
                 <div className="relative z-10 text-center py-4">
                   <Lock className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                   <h3 className="font-semibold text-lg mb-1">{t('pricingLocked')}</h3>

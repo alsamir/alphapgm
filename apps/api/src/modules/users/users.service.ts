@@ -114,6 +114,7 @@ export class UsersService {
         creditBalance: true,
         status: true,
         settings: true,
+        groupMemberships: { include: { group: true } },
       },
       skip,
       take: limit + 1,
@@ -135,6 +136,7 @@ export class UsersService {
       discount: u.settings?.[0]?.discount || 0,
       createdAt: u.createdDate,
       lastAccess: u.lastAccess,
+      groups: u.groupMemberships?.map((gm) => ({ id: gm.group.id, name: gm.group.name, color: gm.group.color })) || [],
     }));
 
     return { data, page, limit, hasMore };

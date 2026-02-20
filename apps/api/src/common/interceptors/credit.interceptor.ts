@@ -5,7 +5,7 @@ import {
   CallHandler,
   ForbiddenException,
 } from '@nestjs/common';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CREDIT_COST_KEY } from '../decorators/credit-cost.decorator';
@@ -25,6 +25,35 @@ export class CreditInterceptor implements NestInterceptor {
     const userId = request.user?.userId;
     if (!userId) return next.handle();
 
+    // Extract resource ID from request params
+    const resourceId = request.params?.id;
+    const handlerName = context.getHandler().name;
+
+    // 7-day free re-view: if user viewed this converter within 7 days, skip credit deduction
+    if (handlerName === 'findOne' && resourceId) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recentView = await this.prisma.creditLedger.findFirst({
+        where: {
+          userId: BigInt(userId),
+          sourceId: parseInt(resourceId),
+          type: 'CONSUMPTION',
+          createdAt: { gte: sevenDaysAgo },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (recentView) {
+        // Free re-view — add flag to response so UI knows
+        return next.handle().pipe(
+          map((data: any) => ({
+            ...data,
+            fromHistory: true,
+            historyDate: recentView.createdAt.toISOString(),
+          })),
+        );
+      }
+    }
+
     const balance = await this.prisma.creditBalance.findUnique({
       where: { userId: BigInt(userId) },
     });
@@ -32,10 +61,6 @@ export class CreditInterceptor implements NestInterceptor {
     if (!balance || balance.available < cost) {
       throw new ForbiddenException('Insufficient credits. Please upgrade your plan or purchase more credits.');
     }
-
-    // Extract resource ID from request params
-    const resourceId = request.params?.id;
-    const handlerName = context.getHandler().name;
 
     return next.handle().pipe(
       tap(async () => {
